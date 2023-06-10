@@ -3,7 +3,7 @@ source ~/.bashrc
 eval "$(conda shell.bash hook)"
 conda activate openflamingo
 which python
-
+module load  cuda/11.6
 LM_PATH="/projectnb/ivc-ml/sunxm/llama/llama-7b-hf"
 LM_TOKENIZER_PATH="/projectnb/ivc-ml/sunxm/llama/llama-7b-hf"
 VISION_ENCODER_NAME="ViT-L-14"
