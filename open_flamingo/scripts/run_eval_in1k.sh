@@ -9,7 +9,7 @@ LM_TOKENIZER_PATH="/projectnb/ivc-ml/sunxm/llama/llama-7b-hf"
 VISION_ENCODER_NAME="ViT-L-14"
 VISION_ENCODER_PRETRAINED="openai"
 CKPT_PATH="/projectnb/ivc-ml/sunxm/open-flamingo/checkpoint.pt"
-DEVICE=$CUDA_VISIBLE_DEVICES
+DEVICE=0
 
 #COCO_IMG_PATH="<path to coco>/train2017/"
 #COCO_ANNO_PATH="<path to coco>/annotations/captions_train2017.json"

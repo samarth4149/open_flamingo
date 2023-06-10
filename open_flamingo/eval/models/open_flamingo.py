@@ -42,8 +42,6 @@ class EvalModel(BaseEvalModel):
         )
         checkpoint = torch.load(model_args["checkpoint_path"], map_location="cpu")
         self.model.load_state_dict(checkpoint, strict=False)
-        import pdb
-        pdb.set_trace()
         self.model.to(self.device)
         self.model.eval()
         self.tokenizer.padding_side = "left"
