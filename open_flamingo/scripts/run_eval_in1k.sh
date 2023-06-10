@@ -22,6 +22,8 @@ IMAGENET_PATH='/projectnb/ivc-ml/sunxm/datasets/imagenet1k'
 RANDOM_ID=$$
 RESULTS_FILE="results_${RANDOM_ID}.json"
 
+cd /projectnb/ivc-ml/sunxm/code/open_flamingo
+
 python open_flamingo/eval/evaluate.py \
     --lm_path $LM_PATH \
     --lm_tokenizer_path $LM_TOKENIZER_PATH \
