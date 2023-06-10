@@ -17,7 +17,7 @@ DEVICE=$CUDA_VISIBLE_DEVICES
 #VQAV2_ANNO_PATH="<path to vqav2>/v2_mscoco_train2014_annotations.json"
 #VQAV2_QUESTION_PATH="<path to vqav2>/v2_OpenEnded_mscoco_train2014_questions.json"
 
-$IMAGENET_PATH='/projectnb/ivc-ml/sunxm/datasets/imagenet1k'
+IMAGENET_PATH='/projectnb/ivc-ml/sunxm/datasets/imagenet1k'
 
 RANDOM_ID=$$
 RESULTS_FILE="results_${RANDOM_ID}.json"
