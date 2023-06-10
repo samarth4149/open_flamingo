@@ -823,7 +823,7 @@ def evaluate_imagenet(
     train_dataset = ImageNetDataset(os.path.join(imagenet_root, "train"))
     val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val"))
 
-    effective_num_shots = compute_effective_num_shots(num_shots, args.model)
+    effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
     tokenizer.padding_side = (
         "left"  # For generation padding tokens should be on the left
     )
