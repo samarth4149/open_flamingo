@@ -297,6 +297,8 @@ parser.add_argument(
 
 def main():
     args, leftovers = parser.parse_known_args()
+    import pdb
+    pdb.set_trace()
     module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
 
     model_args = {
