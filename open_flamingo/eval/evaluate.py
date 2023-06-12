@@ -833,8 +833,6 @@ def evaluate_imagenet(
     prompt_text = "<image>A photo of a"
 
     val_iterator = more_itertools.chunked(val_dataset, batch_size)
-    import pdb
-    pdb.set_trace()
     for batch_idx, batch in enumerate(val_iterator):
         batch_images = []
         batch_text = []
@@ -869,6 +867,199 @@ def evaluate_imagenet(
         vision_x = vision_x.unsqueeze(2)
         model._encode_vision_x(vision_x.cuda())
 
+        # Cache the context text: tokenize context and prompt,
+        # e.g. '<context> a picture of a '
+        ctx_and_prompt_tokenized = tokenizer(
+            [context_text + prompt_text + " " for context_text in batch_text],
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=2048,
+        )
+
+        with torch.no_grad():
+            precomputed = model(
+                vision_x=None,
+                lang_x=ctx_and_prompt_tokenized["input_ids"].cuda(),
+                attention_mask=ctx_and_prompt_tokenized["attention_mask"].cuda(),
+                clear_conditioned_layers=False,
+                use_cached_vision_x=True,
+                use_cache=True,
+            )
+
+        def _detach_pkvs(pkvs):
+            """Detach a set of past key values."""
+            return tuple([tuple([x.detach() for x in inner]) for inner in pkvs])
+
+        precomputed_pkvs = _detach_pkvs(precomputed.past_key_values)
+
+        precomputed_logits = precomputed.logits.detach()
+
+        overall_probs = []
+        for imagenet_class_name in tqdm(openai_imagenet_classnames):
+            past_key_values = None
+            # Tokenize only the class name and iteratively decode the model's
+            # predictions for this class.
+            import pdb
+            pdb.set_trace()
+            classname_tokens = tokenizer(
+                imagenet_class_name, add_special_tokens=False, return_tensors="pt"
+            )["input_ids"].cuda()
+
+            if classname_tokens.ndim == 1:  # Case: classname is only 1 token
+                classname_tokens = torch.unsqueeze(classname_tokens, 1)
+
+            classname_tokens = repeat(
+                classname_tokens, "b s -> (repeat b) s", repeat=batch_size
+            )
+
+            # Compute the outputs one token at a time, using cached
+            # activations.
+
+            # Initialize the elementwise predictions with the last set of
+            # logits from precomputed; this will correspond to the predicted
+            # probability of the first position/token in the imagenet
+            # classname. We will append the logits for each token to this
+            # list (each element has shape [B, 1, vocab_size]).
+            elementwise_logits = [precomputed_logits[:, -2:-1, :]]
+
+            for token_idx in range(classname_tokens.shape[1]):
+                _lang_x = classname_tokens[:, token_idx].reshape((-1, 1))
+                with torch.no_grad():
+                    outputs = model(
+                        vision_x=None,
+                        lang_x=_lang_x,
+                        clear_conditioned_layers=False,
+                        use_cached_vision_x=True,
+                        past_key_values=(
+                            past_key_values if token_idx > 0 else precomputed_pkvs
+                        ),
+                        use_cache=True,
+                    )
+                past_key_values = _detach_pkvs(outputs.past_key_values)
+                elementwise_logits.append(outputs.logits.detach())
+
+            # logits/probs has shape [B, classname_tokens + 1, vocab_size]
+            logits = torch.concat(elementwise_logits, 1)
+            probs = torch.softmax(logits, dim=-1).detach()
+
+            # collect the probability of the generated token -- probability
+            # at index 0 corresponds to the token at index 1.
+            probs = probs[:, :-1, :]  # shape [B, classname_tokens, vocab_size]
+
+            gen_probs = torch.gather(probs, 2, classname_tokens[:, :, None]).squeeze(-1)
+
+            class_prob = torch.prod(gen_probs, 1).detach().cpu().numpy()
+            overall_probs.append(class_prob)
+
+        overall_probs = np.row_stack(overall_probs).T  # shape [B, num_classes]
+
+        def topk(probs_ary: np.ndarray, k: int) -> np.ndarray:
+            """Return the indices of the top k elements in probs_ary."""
+            return np.argsort(probs_ary)[::-1][:k]
+
+        for i in range(batch_size):
+            top5 = [
+                IMAGENET_1K_CLASS_ID_TO_LABEL[pred]
+                for pred in topk(overall_probs[i], 5)
+            ]
+
+            y_i = batch[i]["class_name"]
+            acc5 += int(y_i in set(top5))
+            acc1 += int(y_i == top5[0])
+
+            print(
+                f"DEBUG: batch {idx} elem {i} of {batch_size}:"
+                f"label {y_i} // top5 {top5}"
+            )
+
+        examples_seen = (batch_idx + 1) * batch_size
+        print(
+            "eval {}/{}: acc@1 ({}), acc@5 ({})".format(
+                examples_seen, num_samples, acc1 / examples_seen, acc5 / examples_seen
+            )
+        )
+        if batch_idx * batch_size >= num_samples - 1:
+            break
+
+    return float(acc1) / num_samples
+
+
+def evaluate_imagenet_random_few_shot(
+    eval_model,
+    batch_size: int,
+    imagenet_root: str,
+    seed: int = 42,
+    num_samples: int = 5000,
+    num_shots: int = 8,
+):
+    """
+    Evaluate a model on ImageNet dataset.
+
+    Args:
+        eval_model (BaseEvalModel): model to evaluate
+        batch_size (int): batch size
+        imagenet_root (str): path to imagenet root for the specified split.
+        seed (int, optional): random seed. Defaults to 42.
+        num_samples (int, optional): number of samples to evaluate on. Defaults to 5000 samples.
+        num_shots (int, optional): number of shots to use. Defaults to 8.
+
+    Returns:
+        float: accuracy score
+    """
+    if not hasattr(eval_model, "model") or not hasattr(eval_model, "tokenizer"):
+        raise NotImplementedError(
+            "evaluate_imagenet is currently only supported for OpenFlamingo " "models"
+        )
+    np.random.seed(seed)
+    model, tokenizer = eval_model.model, eval_model.tokenizer
+    assert isinstance(model, Flamingo)
+
+    train_dataset = ImageNetDataset(os.path.join(imagenet_root, "train"))
+    val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val"))
+
+    effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
+    tokenizer.padding_side = (
+        "left"  # For generation padding tokens should be on the left
+    )
+
+    acc1 = 0
+    acc5 = 0
+    prompt_text = "<image>A photo of a"
+
+    val_iterator = more_itertools.chunked(val_dataset, batch_size)
+    # Choose the same set of random context samples for the training set
+    batch_text = []
+
+    context_indices = np.random.choice(
+        len(train_dataset), effective_num_shots, replace=False
+    )
+
+    in_context_samples = [train_dataset[i] for i in context_indices]
+
+    vision_x = [ eval_model.image_processor(data["image"]).unsqueeze(0) for data in in_context_samples
+               ]
+
+
+    context_class_names = [
+        in_context_samples[i]["class_name"] for i in range(effective_num_shots)
+    ]
+    context_text = "".join(
+        f"{prompt_text} {classname}<|endofchunk|>"
+        for classname in context_class_names
+    )
+    batch_text.append(context_text)
+
+    for batch_idx, batch in enumerate(val_iterator):
+        model._encode_vision_x(vision_x.cuda())
+        for idx in range(len(batch)):
+            batch_images = []
+            vision_x += [eval_model.image_processor(batch[idx]["image"]).unsqueeze(0)]
+            batch_images.append(torch.cat(vision_x, dim=0))
+        # shape [B, T_img, C, h, w]
+        vision_x = torch.stack(batch_images, dim=0)
+        # shape [B, T_img, 1, C, h, w] where 1 is the frame dimension
+        vision_x = vision_x.unsqueeze(2)
         # Cache the context text: tokenize context and prompt,
         # e.g. '<context> a picture of a '
         ctx_and_prompt_tokenized = tokenizer(
@@ -983,6 +1174,8 @@ def evaluate_imagenet(
             break
 
     return float(acc1) / num_samples
+
+
 
 
 if __name__ == "__main__":
