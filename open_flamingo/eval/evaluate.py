@@ -936,8 +936,6 @@ def evaluate_imagenet(
             # logits/probs has shape [B, classname_tokens + 1, vocab_size]
             logits = torch.concat(elementwise_logits, 1)
             probs = torch.softmax(logits, dim=-1).detach()
-            import pdb
-            pdb.set_trace()
             # collect the probability of the generated token -- probability
             # at index 0 corresponds to the token at index 1.
             probs = probs[:, :-1, :]  # shape [B, classname_tokens, vocab_size]
