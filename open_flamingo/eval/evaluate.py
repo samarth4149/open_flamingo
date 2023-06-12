@@ -900,18 +900,12 @@ def evaluate_imagenet(
             past_key_values = None
             # Tokenize only the class name and iteratively decode the model's
             # predictions for this class.
-            import pdb
-            pdb.set_trace()
-            classname_tokens = tokenizer(
-                imagenet_class_name, add_special_tokens=False, return_tensors="pt"
-            )["input_ids"].cuda()
+            classname_tokens = tokenizer(imagenet_class_name, add_special_tokens=False, return_tensors="pt")["input_ids"].cuda()
 
             if classname_tokens.ndim == 1:  # Case: classname is only 1 token
                 classname_tokens = torch.unsqueeze(classname_tokens, 1)
 
-            classname_tokens = repeat(
-                classname_tokens, "b s -> (repeat b) s", repeat=batch_size
-            )
+            classname_tokens = repeat(classname_tokens, "b s -> (repeat b) s", repeat=batch_size)
 
             # Compute the outputs one token at a time, using cached
             # activations.
@@ -942,7 +936,8 @@ def evaluate_imagenet(
             # logits/probs has shape [B, classname_tokens + 1, vocab_size]
             logits = torch.concat(elementwise_logits, 1)
             probs = torch.softmax(logits, dim=-1).detach()
-
+            import pdb
+            pdb.set_trace()
             # collect the probability of the generated token -- probability
             # at index 0 corresponds to the token at index 1.
             probs = probs[:, :-1, :]  # shape [B, classname_tokens, vocab_size]
