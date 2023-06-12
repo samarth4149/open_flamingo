@@ -289,6 +289,7 @@ parser.add_argument(
 
 ## Imagenet dataset
 parser.add_argument("--imagenet_root", type=str, default="/tmp")
+parser.add_argument("--imagenet_part", type=int, default=None)
 
 parser.add_argument(
     "--model",
@@ -441,6 +442,7 @@ def main():
                     num_shots=shot,
                     seed=seed,
                     imagenet_root=args.imagenet_root,
+                    imagenet_part=args.imagenet_part
                 )
                 print(
                     f"Shots {shot} Trial {trial} " f"ImageNet score: {imagenet_score}"
@@ -797,6 +799,7 @@ def evaluate_imagenet(
     seed: int = 42,
     num_samples: int = 5000,
     num_shots: int = 8,
+    imagenet_part: int = None
 ):
     """
     Evaluate a model on ImageNet dataset.
@@ -821,7 +824,10 @@ def evaluate_imagenet(
     assert isinstance(model, Flamingo)
 
     train_dataset = ImageNetDataset(os.path.join(imagenet_root, "train"))
-    val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val"))
+    if imagenet_part is None:
+        val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val"))
+    else:
+        val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val%d" % imagenet_part))
 
     effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
     tokenizer.padding_side = (
