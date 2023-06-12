@@ -833,6 +833,8 @@ def evaluate_imagenet(
     prompt_text = "<image>A photo of a"
 
     val_iterator = more_itertools.chunked(val_dataset, batch_size)
+    import pdb
+    pdb.set_trace()
     for batch_idx, batch in enumerate(val_iterator):
         batch_images = []
         batch_text = []
