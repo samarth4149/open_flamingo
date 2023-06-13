@@ -17,7 +17,7 @@ DEVICE=0
 #VQAV2_ANNO_PATH="<path to vqav2>/v2_mscoco_train2014_annotations.json"
 #VQAV2_QUESTION_PATH="<path to vqav2>/v2_OpenEnded_mscoco_train2014_questions.json"
 
-IMAGENET_PATH='/projectnb/ivc-ml/sunxm/datasets/imagenet1k'
+STANFORD_CARS_PATH='/projectnb/ivc-ml/sunxm/datasets/stanford_cars_20211007'
 
 RANDOM_ID=$$
 RESULTS_FILE="results_${RANDOM_ID}.json"
@@ -33,14 +33,13 @@ python open_flamingo/eval/evaluate.py \
     --cross_attn_every_n_layers 4 \
     --device $DEVICE \
     --results_file $RESULTS_FILE \
-    --eval_imagenet \
-    --imagenet_root $IMAGENET_PATH \
-    --num_samples 25000 \
+    --eval_image_cls \
+    --image_cls_root $STANFORD_CARS_PATH \
+    --image_cls_class_name 'stanford-cars' \
+    --num_samples 8041 \
     --shots 1 \
     --num_trials 1 \
-    --batch_size 56 \
-    --imagenet_part 2 \
-    --imagenet_val_offset 500
+    --batch_size 50
 
 
 echo "evaluation complete! results written to ${RESULTS_FILE}"

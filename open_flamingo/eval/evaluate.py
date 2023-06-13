@@ -16,7 +16,7 @@ import torch
 
 
 from coco_metric import compute_cider, postprocess_captioning_generation
-from eval_datasets import CaptionDataset, VQADataset, ImageNetDataset
+from eval_datasets import CaptionDataset, VQADataset, ImageNetDataset, ImageDataset
 from tqdm import tqdm
 
 
@@ -24,6 +24,11 @@ from eval_datasets import VQADataset, ImageNetDataset
 from open_flamingo.eval.imagenet_utils import (
     openai_imagenet_classnames,
     IMAGENET_1K_CLASS_ID_TO_LABEL,
+)
+
+from open_flamingo.eval.elevater_utils import (
+    class_map_cls_id_to_class,
+    class_map,
 )
 
 from eval_model import BaseEvalModel
@@ -93,6 +98,12 @@ parser.add_argument(
 )
 parser.add_argument(
     "--eval_imagenet",
+    action="store_true",
+    default=False,
+    help="Whether to evaluate on ImageNet.",
+)
+parser.add_argument(
+    "--eval_image_cls",
     action="store_true",
     default=False,
     help="Whether to evaluate on ImageNet.",
@@ -290,7 +301,14 @@ parser.add_argument(
 ## Imagenet dataset
 parser.add_argument("--imagenet_root", type=str, default="/tmp")
 parser.add_argument("--imagenet_part", type=int, default=None)
-parser.add_argument("--imagenet_val_offsite", type=int, default=0)
+parser.add_argument("--imagenet_val_offset", type=int, default=0)
+
+
+## Image dataset
+parser.add_argument("--image_cls_root", type=str, default="/tmp")
+parser.add_argument("--image_cls_dataset_name", type=str, default="/tmp")
+parser.add_argument("--image_cls_part", type=int, default=None)
+parser.add_argument("--image_cls_val_offset", type=int, default=0)
 
 parser.add_argument(
     "--model",
@@ -454,6 +472,32 @@ def main():
             results["imagenet"].append(
                 {"shots": shot, "trials": scores, "mean": np.mean(scores)}
             )
+
+    if args.eval_image_cls:
+        print("Evaluating on Image Classification Dataset...")
+        for shot in args.shots:
+            scores = []
+            for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
+                image_cls_score = evaluate_image_cls(
+                    eval_model=eval_model,
+                    batch_size=args.batch_size,
+                    num_samples=args.num_samples,
+                    num_shots=shot,
+                    seed=seed,
+                    image_cls_root=args.image_cls_root,
+                    image_cls_dataset_name=args.image_cls_dataset_name,
+                    image_cls_part=args.image_cls_part,
+                    image_cls_val_offsite=args.image_cls_val_offsite
+                )
+                print(
+                    f"Shots {shot} Trial {trial} " f"Image CLS score: {image_cls_score} on '{args.image_cls_dataset_name} part {args.image_cls_part}"
+                )
+                scores.append(image_cls_score)
+            print(f"Shots {shot} Mean Image CLS score: {np.mean(scores)} on '{args.image_cls_dataset_name} part {args.image_cls_part}")
+            results["imagenet"].append(
+                {"shots": shot, "trials": scores, "mean": np.mean(scores)}
+            )
+
 
     if args.results_file is not None:
         with open(args.results_file, "w") as f:
@@ -802,7 +846,7 @@ def evaluate_imagenet(
     num_samples: int = 5000,
     num_shots: int = 8,
     imagenet_part: int = None,
-    imagenet_val_offsite: int = 0
+    imagenet_val_offset: int = 0
 ):
     """
     Evaluate a model on ImageNet dataset.
@@ -830,7 +874,7 @@ def evaluate_imagenet(
     if imagenet_part is None:
         val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val"))
     else:
-        val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val%d" % imagenet_part), offset=imagenet_val_offsite)
+        val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val%d" % imagenet_part), offset=imagenet_val_offset)
 
     effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
     tokenizer.padding_side = (
@@ -987,13 +1031,17 @@ def evaluate_imagenet(
     return float(acc1) / num_samples
 
 
-def evaluate_imagenet_random_few_shot(
+def evaluate_image_cls(
     eval_model,
     batch_size: int,
-    imagenet_root: str,
+    image_cls_root: str,
+    image_cls_dataset_name: str,
     seed: int = 42,
     num_samples: int = 5000,
     num_shots: int = 8,
+    image_cls_part: int = None,
+    image_cls_val_offset: int = 0
+
 ):
     """
     Evaluate a model on ImageNet dataset.
@@ -1017,8 +1065,11 @@ def evaluate_imagenet_random_few_shot(
     model, tokenizer = eval_model.model, eval_model.tokenizer
     assert isinstance(model, Flamingo)
 
-    train_dataset = ImageNetDataset(os.path.join(imagenet_root, "train"))
-    val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val"))
+    train_dataset = ImageDataset(os.path.join(image_cls_root, "train"), image_cls_dataset_name)
+    if image_cls_part is None:
+        val_dataset = ImageDataset(os.path.join(image_cls_root, "val"), image_cls_dataset_name)
+    else:
+        val_dataset = ImageDataset(os.path.join(image_cls_root, "val%d" % image_cls_part), image_cls_dataset_name, offset=image_cls_val_offset)
 
     effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
     tokenizer.padding_side = (
@@ -1030,38 +1081,40 @@ def evaluate_imagenet_random_few_shot(
     prompt_text = "<image>A photo of a"
 
     val_iterator = more_itertools.chunked(val_dataset, batch_size)
-    # Choose the same set of random context samples for the training set
-    batch_text = []
-
-    context_indices = np.random.choice(
-        len(train_dataset), effective_num_shots, replace=False
-    )
-
-    in_context_samples = [train_dataset[i] for i in context_indices]
-
-    vision_x = [ eval_model.image_processor(data["image"]).unsqueeze(0) for data in in_context_samples
-               ]
-
-
-    context_class_names = [
-        in_context_samples[i]["class_name"] for i in range(effective_num_shots)
-    ]
-    context_text = "".join(
-        f"{prompt_text} {classname}<|endofchunk|>"
-        for classname in context_class_names
-    )
-    batch_text.append(context_text)
-
     for batch_idx, batch in enumerate(val_iterator):
-        model._encode_vision_x(vision_x.cuda())
+        batch_images = []
+        batch_text = []
+
         for idx in range(len(batch)):
-            batch_images = []
-            vision_x += [eval_model.image_processor(batch[idx]["image"]).unsqueeze(0)]
+            # Choose a different set of random context samples for each sample
+            # from the training set
+            context_indices = np.random.choice(
+                len(train_dataset), effective_num_shots, replace=False
+            )
+
+            in_context_samples = [train_dataset[i] for i in context_indices]
+
+            vision_x = [
+                eval_model.image_processor(data["image"]).unsqueeze(0)
+                for data in in_context_samples
+            ] + [eval_model.image_processor(batch[idx]["image"]).unsqueeze(0)]
             batch_images.append(torch.cat(vision_x, dim=0))
+
+            context_class_names = [
+                in_context_samples[i]["class_name"] for i in range(effective_num_shots)
+            ]
+            context_text = "".join(
+                f"{prompt_text} {classname}<|endofchunk|>"
+                for classname in context_class_names
+            )
+            batch_text.append(context_text)
+
         # shape [B, T_img, C, h, w]
         vision_x = torch.stack(batch_images, dim=0)
         # shape [B, T_img, 1, C, h, w] where 1 is the frame dimension
         vision_x = vision_x.unsqueeze(2)
+        model._encode_vision_x(vision_x.cuda())
+
         # Cache the context text: tokenize context and prompt,
         # e.g. '<context> a picture of a '
         ctx_and_prompt_tokenized = tokenizer(
@@ -1091,20 +1144,16 @@ def evaluate_imagenet_random_few_shot(
         precomputed_logits = precomputed.logits.detach()
 
         overall_probs = []
-        for imagenet_class_name in tqdm(openai_imagenet_classnames):
+        for image_cls_class_name in tqdm(class_map[image_cls_dataset_name]):
             past_key_values = None
             # Tokenize only the class name and iteratively decode the model's
             # predictions for this class.
-            classname_tokens = tokenizer(
-                imagenet_class_name, add_special_tokens=False, return_tensors="pt"
-            )["input_ids"].cuda()
+            classname_tokens = tokenizer(image_cls_class_name, add_special_tokens=False, return_tensors="pt")["input_ids"].cuda()
 
             if classname_tokens.ndim == 1:  # Case: classname is only 1 token
                 classname_tokens = torch.unsqueeze(classname_tokens, 1)
 
-            classname_tokens = repeat(
-                classname_tokens, "b s -> (repeat b) s", repeat=batch_size
-            )
+            classname_tokens = repeat(classname_tokens, "b s -> (repeat b) s", repeat=batch_size)
 
             # Compute the outputs one token at a time, using cached
             # activations.
@@ -1135,7 +1184,6 @@ def evaluate_imagenet_random_few_shot(
             # logits/probs has shape [B, classname_tokens + 1, vocab_size]
             logits = torch.concat(elementwise_logits, 1)
             probs = torch.softmax(logits, dim=-1).detach()
-
             # collect the probability of the generated token -- probability
             # at index 0 corresponds to the token at index 1.
             probs = probs[:, :-1, :]  # shape [B, classname_tokens, vocab_size]
@@ -1153,7 +1201,7 @@ def evaluate_imagenet_random_few_shot(
 
         for i in range(batch_size):
             top5 = [
-                IMAGENET_1K_CLASS_ID_TO_LABEL[pred]
+                class_map_cls_id_to_class[image_cls_dataset_name][pred]
                 for pred in topk(overall_probs[i], 5)
             ]
 

@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 from torchvision.datasets import ImageFolder
 
 from open_flamingo.eval.imagenet_utils import IMAGENET_1K_CLASS_ID_TO_LABEL
+from open_flamingo.eval.elevater_utils import class_map
 
 
 class CaptionDataset(Dataset):
@@ -116,6 +117,25 @@ class ImageNetDataset(ImageFolder):
     def __getitem__(self, idx):
         sample, target = super().__getitem__(idx)
         target_label = IMAGENET_1K_CLASS_ID_TO_LABEL[target+self.offset]
+        return {
+            "image": sample,
+            "class_id": target,  # numeric ID of the ImageNet class
+            "class_name": target_label,  # human-readable name of ImageNet class
+        }
+
+
+
+class ImageDataset(ImageFolder):
+    """Class to represent the ImageNet1k dataset."""
+
+    def __init__(self, root, dataset_name, offset=0,  **kwargs):
+        super().__init__(root=root, **kwargs)
+        self.offset = offset
+        self.dataset_name = dataset_name
+
+    def __getitem__(self, idx):
+        sample, target = super().__getitem__(idx)
+        target_label = class_map[self.dataset_name][target+self.offset]
         return {
             "image": sample,
             "class_id": target,  # numeric ID of the ImageNet class
