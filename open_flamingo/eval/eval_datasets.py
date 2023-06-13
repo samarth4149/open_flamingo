@@ -109,12 +109,13 @@ class VQADataset(Dataset):
 class ImageNetDataset(ImageFolder):
     """Class to represent the ImageNet1k dataset."""
 
-    def __init__(self, root, **kwargs):
+    def __init__(self, root, offset=0,  **kwargs):
         super().__init__(root=root, **kwargs)
+        self.offset = offset
 
     def __getitem__(self, idx):
         sample, target = super().__getitem__(idx)
-        target_label = IMAGENET_1K_CLASS_ID_TO_LABEL[target]
+        target_label = IMAGENET_1K_CLASS_ID_TO_LABEL[target+self.offset]
         return {
             "image": sample,
             "class_id": target,  # numeric ID of the ImageNet class

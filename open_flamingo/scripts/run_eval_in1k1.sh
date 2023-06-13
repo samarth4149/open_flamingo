@@ -38,7 +38,7 @@ python open_flamingo/eval/evaluate.py \
     --num_samples 25000 \
     --shots 1 \
     --num_trials 1 \
-    --batch_size 64 \
+    --batch_size 56 \
     --imagenet_part 1 \
 
 

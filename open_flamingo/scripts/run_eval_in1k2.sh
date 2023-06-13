@@ -38,8 +38,9 @@ python open_flamingo/eval/evaluate.py \
     --num_samples 25000 \
     --shots 1 \
     --num_trials 1 \
-    --batch_size 50 \
+    --batch_size 56 \
     --imagenet_part 2 \
+    --imagenet_val_offsite 500
 
 
 echo "evaluation complete! results written to ${RESULTS_FILE}"

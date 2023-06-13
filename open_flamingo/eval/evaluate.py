@@ -290,6 +290,7 @@ parser.add_argument(
 ## Imagenet dataset
 parser.add_argument("--imagenet_root", type=str, default="/tmp")
 parser.add_argument("--imagenet_part", type=int, default=None)
+parser.add_argument("--imagenet_val_offsite", type=int, default=0)
 
 parser.add_argument(
     "--model",
@@ -799,7 +800,8 @@ def evaluate_imagenet(
     seed: int = 42,
     num_samples: int = 5000,
     num_shots: int = 8,
-    imagenet_part: int = None
+    imagenet_part: int = None,
+    imagenet_val_offsite: int = 0
 ):
     """
     Evaluate a model on ImageNet dataset.
@@ -827,7 +829,7 @@ def evaluate_imagenet(
     if imagenet_part is None:
         val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val"))
     else:
-        val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val%d" % imagenet_part))
+        val_dataset = ImageNetDataset(os.path.join(imagenet_root, "val%d" % imagenet_part), offset=imagenet_val_offsite)
 
     effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
     tokenizer.padding_side = (
