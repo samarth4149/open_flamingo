@@ -443,7 +443,8 @@ def main():
                     num_shots=shot,
                     seed=seed,
                     imagenet_root=args.imagenet_root,
-                    imagenet_part=args.imagenet_part
+                    imagenet_part=args.imagenet_part,
+                    imagenet_val_offsite=args.imagenet_val_offsite
                 )
                 print(
                     f"Shots {shot} Trial {trial} " f"ImageNet score: {imagenet_score}"
