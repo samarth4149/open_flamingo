@@ -462,7 +462,7 @@ def main():
                     seed=seed,
                     imagenet_root=args.imagenet_root,
                     imagenet_part=args.imagenet_part,
-                    imagenet_val_offsite=args.imagenet_val_offsite
+                    imagenet_val_offset=args.imagenet_val_offset
                 )
                 print(
                     f"Shots {shot} Trial {trial} " f"ImageNet score: {imagenet_score}"
@@ -487,7 +487,7 @@ def main():
                     image_cls_root=args.image_cls_root,
                     image_cls_dataset_name=args.image_cls_dataset_name,
                     image_cls_part=args.image_cls_part,
-                    image_cls_val_offsite=args.image_cls_val_offsite
+                    image_cls_val_offset=args.image_cls_val_offset
                 )
                 print(
                     f"Shots {shot} Trial {trial} " f"Image CLS score: {image_cls_score} on '{args.image_cls_dataset_name} part {args.image_cls_part}"
