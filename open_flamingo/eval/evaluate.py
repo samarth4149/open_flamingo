@@ -309,6 +309,7 @@ parser.add_argument("--image_cls_root", type=str, default="/tmp")
 parser.add_argument("--image_cls_dataset_name", type=str, default="/tmp")
 parser.add_argument("--image_cls_part", type=int, default=None)
 parser.add_argument("--image_cls_val_offset", type=int, default=0)
+parser.add_argument("--image_cls_val_split", type=str, default='val')
 
 parser.add_argument(
     "--model",
@@ -487,7 +488,8 @@ def main():
                     image_cls_root=args.image_cls_root,
                     image_cls_dataset_name=args.image_cls_dataset_name,
                     image_cls_part=args.image_cls_part,
-                    image_cls_val_offset=args.image_cls_val_offset
+                    image_cls_val_offset=args.image_cls_val_offset,
+                    image_cls_val_split=args.image_cls_val_split
                 )
                 print(
                     f"Shots {shot} Trial {trial} " f"Image CLS score: {image_cls_score} on '{args.image_cls_dataset_name} part {args.image_cls_part}"
@@ -1040,7 +1042,8 @@ def evaluate_image_cls(
     num_samples: int = 5000,
     num_shots: int = 8,
     image_cls_part: int = None,
-    image_cls_val_offset: int = 0
+    image_cls_val_offset: int = 0,
+    image_cls_val_split: str = 'val'
 
 ):
     """
@@ -1067,9 +1070,9 @@ def evaluate_image_cls(
 
     train_dataset = ImageDataset(os.path.join(image_cls_root, "train"), dataset_name=image_cls_dataset_name)
     if image_cls_part is None:
-        val_dataset = ImageDataset(os.path.join(image_cls_root, "val"), dataset_name=image_cls_dataset_name)
+        val_dataset = ImageDataset(os.path.join(image_cls_root, image_cls_val_split), dataset_name=image_cls_dataset_name)
     else:
-        val_dataset = ImageDataset(os.path.join(image_cls_root, "val%d" % image_cls_part), dataset_name=image_cls_dataset_name, offset=image_cls_val_offset)
+        val_dataset = ImageDataset(os.path.join(image_cls_root, f"{image_cls_val_split}%d" % image_cls_part), dataset_name=image_cls_dataset_name, offset=image_cls_val_offset)
 
     effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
     tokenizer.padding_side = (
