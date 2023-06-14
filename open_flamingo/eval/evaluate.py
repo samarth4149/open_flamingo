@@ -1065,11 +1065,11 @@ def evaluate_image_cls(
     model, tokenizer = eval_model.model, eval_model.tokenizer
     assert isinstance(model, Flamingo)
 
-    train_dataset = ImageDataset(os.path.join(image_cls_root, "train"), image_cls_dataset_name)
+    train_dataset = ImageDataset(os.path.join(image_cls_root, "train"), dataset_name=image_cls_dataset_name)
     if image_cls_part is None:
-        val_dataset = ImageDataset(os.path.join(image_cls_root, "val"), image_cls_dataset_name)
+        val_dataset = ImageDataset(os.path.join(image_cls_root, "val"), dataset_name=image_cls_dataset_name)
     else:
-        val_dataset = ImageDataset(os.path.join(image_cls_root, "val%d" % image_cls_part), image_cls_dataset_name, offset=image_cls_val_offset)
+        val_dataset = ImageDataset(os.path.join(image_cls_root, "val%d" % image_cls_part), dataset_name=image_cls_dataset_name, offset=image_cls_val_offset)
 
     effective_num_shots = compute_effective_num_shots(num_shots, 'open_flamingo')
     tokenizer.padding_side = (
