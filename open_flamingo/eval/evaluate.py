@@ -1081,7 +1081,7 @@ def evaluate_image_cls(
 
     acc1 = 0
     acc5 = 0
-    prompt_text = "<image>A photo of a"
+    prompt_text = "<image>This is a"
 
     val_iterator = more_itertools.chunked(val_dataset, batch_size)
     for batch_idx, batch in enumerate(val_iterator):
