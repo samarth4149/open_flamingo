@@ -39,7 +39,8 @@ python open_flamingo/eval/evaluate.py \
     --num_samples 1020 \
     --shots 1 \
     --num_trials 1 \
-    --batch_size 50
+    --batch_size 50 \
+    --image_cls_val_split 'test'
 
 
 echo "evaluation complete! results written to ${RESULTS_FILE}"
