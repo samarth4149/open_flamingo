@@ -135,8 +135,6 @@ class ImageDataset(ImageFolder):
 
     def __getitem__(self, idx):
         sample, target = super().__getitem__(idx)
-        import pdb
-        pdb.set_trace()
         target_label = class_map_cls_id_to_class[self.dataset_name][target+self.offset]
         return {
             "image": sample,

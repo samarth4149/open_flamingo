@@ -35,7 +35,7 @@ python open_flamingo/eval/evaluate.py \
     --results_file $RESULTS_FILE \
     --eval_image_cls \
     --image_cls_root $STANFORD_CARS_PATH \
-    --image_cls_class_name 'stanford-cars' \
+    --image_cls_dataset_name 'stanford-cars' \
     --num_samples 8041 \
     --shots 1 \
     --num_trials 1 \
