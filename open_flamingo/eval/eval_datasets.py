@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from torchvision.datasets import ImageFolder
 
 from open_flamingo.eval.imagenet_utils import IMAGENET_1K_CLASS_ID_TO_LABEL
-from open_flamingo.eval.elevater_utils import class_map
+from open_flamingo.eval.elevater_utils import class_map_cls_id_to_class
 
 
 class CaptionDataset(Dataset):
@@ -135,7 +135,9 @@ class ImageDataset(ImageFolder):
 
     def __getitem__(self, idx):
         sample, target = super().__getitem__(idx)
-        target_label = class_map[self.dataset_name][target+self.offset]
+        import pdb
+        pdb.set_trace()
+        target_label = class_map_cls_id_to_class[self.dataset_name][target+self.offset]
         return {
             "image": sample,
             "class_id": target,  # numeric ID of the ImageNet class
