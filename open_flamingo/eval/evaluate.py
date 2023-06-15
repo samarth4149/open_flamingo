@@ -1068,6 +1068,9 @@ def evaluate_image_cls(
     model, tokenizer = eval_model.model, eval_model.tokenizer
     assert isinstance(model, Flamingo)
 
+    import pdb
+    pdb.set_trace()
+
     train_dataset = ImageDataset(os.path.join(image_cls_root, "train"), dataset_name=image_cls_dataset_name)
     if image_cls_part is None:
         val_dataset = ImageDataset(os.path.join(image_cls_root, image_cls_val_split), dataset_name=image_cls_dataset_name)
