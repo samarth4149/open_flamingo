@@ -1084,6 +1084,8 @@ def evaluate_image_cls(
     prompt_text = "<image>A photo of "
 
     val_iterator = more_itertools.chunked(val_dataset, batch_size)
+    import pdb
+    pdb.set_trace()
     for batch_idx, batch in enumerate(val_iterator):
         batch_images = []
         batch_text = []
@@ -1213,7 +1215,7 @@ def evaluate_image_cls(
             acc1 += int(y_i == top5[0])
 
             print(
-                f"DEBUG: batch {idx} elem {i} of {vision_x.shape[0]}:"
+                f"DEBUG: batch {batch_idx} elem {i} of {vision_x.shape[0]}:"
                 f"label {y_i} // top5 {top5}"
             )
 
