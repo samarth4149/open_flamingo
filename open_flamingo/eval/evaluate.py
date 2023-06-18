@@ -985,6 +985,8 @@ def evaluate_imagenet(
                         ),
                         use_cache=True,
                     )
+                import pdb
+                pdb.set_trace()
                 past_key_values = _detach_pkvs(outputs.past_key_values)
                 elementwise_logits.append(outputs.logits.detach())
 
