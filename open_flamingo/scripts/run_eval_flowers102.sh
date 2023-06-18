@@ -36,7 +36,7 @@ python open_flamingo/eval/evaluate.py \
     --eval_image_cls \
     --image_cls_root $STANFORD_CARS_PATH \
     --image_cls_dataset_name 'oxford-flower-102' \
-    --num_samples 1020 \
+    --num_samples 6149 \
     --shots 1 \
     --num_trials 1 \
     --batch_size 50 \

@@ -985,8 +985,6 @@ def evaluate_imagenet(
                         ),
                         use_cache=True,
                     )
-                import pdb
-                pdb.set_trace()
                 past_key_values = _detach_pkvs(outputs.past_key_values)
                 elementwise_logits.append(outputs.logits.detach())
 
@@ -1069,9 +1067,6 @@ def evaluate_image_cls(
     np.random.seed(seed)
     model, tokenizer = eval_model.model, eval_model.tokenizer
     assert isinstance(model, Flamingo)
-
-    import pdb
-    pdb.set_trace()
 
     train_dataset = ImageDataset(os.path.join(image_cls_root, "train"), dataset_name=image_cls_dataset_name)
     if image_cls_part is None:
@@ -1186,8 +1181,6 @@ def evaluate_image_cls(
                         ),
                         use_cache=True,
                     )
-                import pdb
-                pdb.set_trace()
                 past_key_values = _detach_pkvs(outputs.past_key_values)
                 elementwise_logits.append(outputs.logits.detach())
 
@@ -1200,8 +1193,8 @@ def evaluate_image_cls(
 
             gen_probs = torch.gather(probs, 2, classname_tokens[:, :, None]).squeeze(-1)
 
-            class_prob = torch.prod(gen_probs, 1).detach().cpu().numpy()
-            overall_probs.append(class_prob)
+            class_prob = torch.sum(torch.log(gen_probs), 1).detach().cpu().numpy()
+            overall_probs.append(class_prob/classname_tokens.shape[1])
 
         overall_probs = np.row_stack(overall_probs).T  # shape [B, num_classes]
 
