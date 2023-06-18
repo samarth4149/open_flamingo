@@ -1089,8 +1089,6 @@ def evaluate_image_cls(
     prompt_text = "<image>A photo of "
 
     val_iterator = more_itertools.chunked(val_dataset, batch_size)
-    import pdb
-    pdb.set_trace()
     for batch_idx, batch in enumerate(val_iterator):
         batch_images = []
         batch_text = []
@@ -1188,6 +1186,8 @@ def evaluate_image_cls(
                         ),
                         use_cache=True,
                     )
+                import pdb
+                pdb.set_trace()
                 past_key_values = _detach_pkvs(outputs.past_key_values)
                 elementwise_logits.append(outputs.logits.detach())
 
