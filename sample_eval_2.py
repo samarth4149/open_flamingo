@@ -53,7 +53,7 @@ Details: In the text we expect an <image> special token to indicate where an ima
 """
 tokenizer.padding_side = "left" # For generation padding tokens should be on the left
 lang_x = tokenizer(
-    ["<image>Question: Is there table in the image? Answer:"],
+    ["<image>Question: Is there a bird in the image? Answer:"],
     return_tensors="pt",
 )
 
