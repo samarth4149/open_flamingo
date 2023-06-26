@@ -83,8 +83,7 @@ demo_image_one = Image.open(
 
 demo_image_two = Image.open(
     requests.get(
-        "http://images.cocodataset.org/test-stuff2017/000000028137.jpg",
-        stream=True
+        "http://images.cocodataset.org/val2017/000000039769.jpg", stream=True
     ).raw
 )
 
@@ -104,7 +103,7 @@ Details: For OpenFlamingo, we expect the image to be a torch tensor of shape
  (this will always be one expect for video which we don't support yet),
  channels = 3, height = 224, width = 224.
 """
-vision_x = [image_processor(demo_image_one).unsqueeze(0), image_processor(query_image).unsqueeze(0)]
+vision_x = [image_processor(demo_image_one).unsqueeze(0), image_processor(demo_image_two).unsqueeze(0), image_processor(query_image).unsqueeze(0)]
 vision_x = torch.cat(vision_x, dim=0)
 vision_x = vision_x.unsqueeze(1).unsqueeze(0)
 
@@ -116,7 +115,7 @@ Details: In the text we expect an <image> special token to indicate where an ima
 """
 tokenizer.padding_side = "left" # For generation padding tokens should be on the left
 lang_x = tokenizer(
-    ["Answer the question based on the image.<image>Question: is there a cat in the image? Answer: Yes.<|endofchunk|><image>Question: is there a cat in the image? Answer: No.<|endofchunk|><image>Question: is there a cat in the image? Answer:"],
+    ["Answer the question based on the image.<image>Question: is there a cat in the image? Answer: Yes.<|endofchunk|><image>Question: is there a dog in the image? Answer: No.<|endofchunk|><image>Question: is there a cat in the image? Answer:"],
     return_tensors="pt",
 )
 
