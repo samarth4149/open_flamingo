@@ -53,7 +53,7 @@ Details: In the text we expect an <image> special token to indicate where an ima
 """
 tokenizer.padding_side = "left" # For generation padding tokens should be on the left
 lang_x = tokenizer(
-    ["<image>Caption:"],
+    ["<image>caption:"],
     return_tensors="pt",
 )
 
