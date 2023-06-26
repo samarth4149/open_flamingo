@@ -960,7 +960,7 @@ def evaluate_imagenet(
             if classname_tokens.ndim == 1:  # Case: classname is only 1 token
                 classname_tokens = torch.unsqueeze(classname_tokens, 1)
 
-            classname_tokens = repeat(classname_tokens, "b s -> (repeat b) s", repeat=batch_size)
+            classname_tokens = repeat(classname_tokens, "b s -> (repeat b) s", repeat=vision_x.shape[0])
 
             # Compute the outputs one token at a time, using cached
             # activations.
@@ -1006,7 +1006,7 @@ def evaluate_imagenet(
             """Return the indices of the top k elements in probs_ary."""
             return np.argsort(probs_ary)[::-1][:k]
 
-        for i in range(batch_size):
+        for i in range(vision_x.shape[0]):
             top5 = [
                 IMAGENET_1K_CLASS_ID_TO_LABEL[pred]
                 for pred in topk(overall_probs[i], 5)
@@ -1017,17 +1017,17 @@ def evaluate_imagenet(
             acc1 += int(y_i == top5[0])
 
             print(
-                f"DEBUG: batch {idx} elem {i} of {batch_size}:"
+                f"DEBUG: batch {idx} elem {i} of {vision_x.shape[0]}:"
                 f"label {y_i} // top5 {top5}"
             )
 
-        examples_seen = (batch_idx + 1) * batch_size
+        examples_seen = batch_idx * batch_size + vision_x.shape[0]
         print(
             "eval {}/{}: acc@1 ({}), acc@5 ({})".format(
                 examples_seen, num_samples, acc1 / examples_seen, acc5 / examples_seen
             )
         )
-        if batch_idx * batch_size >= num_samples - 1:
+        if examples_seen >= num_samples:
             break
 
     return float(acc1) / num_samples
@@ -1081,7 +1081,7 @@ def evaluate_image_cls(
 
     acc1 = 0
     acc5 = 0
-    prompt_text = "<image>This is a"
+    prompt_text = "<image>A photo of "
 
     val_iterator = more_itertools.chunked(val_dataset, batch_size)
     for batch_idx, batch in enumerate(val_iterator):
@@ -1156,7 +1156,7 @@ def evaluate_image_cls(
             if classname_tokens.ndim == 1:  # Case: classname is only 1 token
                 classname_tokens = torch.unsqueeze(classname_tokens, 1)
 
-            classname_tokens = repeat(classname_tokens, "b s -> (repeat b) s", repeat=batch_size)
+            classname_tokens = repeat(classname_tokens, "b s -> (repeat b) s", repeat=vision_x.shape[0])
 
             # Compute the outputs one token at a time, using cached
             # activations.
@@ -1193,8 +1193,8 @@ def evaluate_image_cls(
 
             gen_probs = torch.gather(probs, 2, classname_tokens[:, :, None]).squeeze(-1)
 
-            class_prob = torch.prod(gen_probs, 1).detach().cpu().numpy()
-            overall_probs.append(class_prob)
+            class_prob = torch.sum(torch.log(gen_probs), 1).detach().cpu().numpy()
+            overall_probs.append(class_prob/classname_tokens.shape[1])
 
         overall_probs = np.row_stack(overall_probs).T  # shape [B, num_classes]
 
@@ -1202,7 +1202,7 @@ def evaluate_image_cls(
             """Return the indices of the top k elements in probs_ary."""
             return np.argsort(probs_ary)[::-1][:k]
 
-        for i in range(batch_size):
+        for i in range(vision_x.shape[0]):
             top5 = [
                 class_map_cls_id_to_class[image_cls_dataset_name][pred]
                 for pred in topk(overall_probs[i], 5)
@@ -1213,17 +1213,17 @@ def evaluate_image_cls(
             acc1 += int(y_i == top5[0])
 
             print(
-                f"DEBUG: batch {idx} elem {i} of {batch_size}:"
+                f"DEBUG: batch {batch_idx} elem {i} of {vision_x.shape[0]}:"
                 f"label {y_i} // top5 {top5}"
             )
 
-        examples_seen = (batch_idx + 1) * batch_size
+        examples_seen = batch_idx * batch_size + vision_x.shape[0]
         print(
             "eval {}/{}: acc@1 ({}), acc@5 ({})".format(
                 examples_seen, num_samples, acc1 / examples_seen, acc5 / examples_seen
             )
         )
-        if batch_idx * batch_size >= num_samples - 1:
+        if examples_seen >= num_samples:
             break
 
     return float(acc1) / num_samples
