@@ -25,7 +25,7 @@ Step 1: Load images
 
 query_image = Image.open(
     requests.get(
-        "http://images.cocodataset.org/test-stuff2017/000000028352.jpg",
+        "http://images.cocodataset.org/val2017/000000039769.jpg",
         stream=True
     ).raw
 )
