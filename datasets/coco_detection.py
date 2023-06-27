@@ -7,7 +7,7 @@ from PIL import Image
 import torch
 import os
 import torchvision.transforms as transforms
-from dataloaders.helper import CutoutPIL
+from datasets.helper import CutoutPIL
 from randaugment import RandAugment
 import pickle
 
