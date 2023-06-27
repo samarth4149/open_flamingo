@@ -9,11 +9,10 @@ import os
 import torchvision.transforms as transforms
 from datasets.helper import CutoutPIL
 from randaugment import RandAugment
-import pickle
 
 
 class CocoDetection(datasets.coco.CocoDetection):
-    def __init__(self, root, data_split, img_size=224, p=1, annFile="", label_mask=None, partial=1+1e-6):
+    def __init__(self, root, data_split, img_size=224):
         # super(CocoDetection, self).__init__()
         self.classnames = ["person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
                            "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
@@ -33,13 +32,7 @@ class CocoDetection(datasets.coco.CocoDetection):
         cls_id.sort()
         self.coco = COCO(annFile)
         self.data_split = data_split
-        ids = list(self.coco.imgToAnns.keys())
-        if data_split == 'train2014':
-            num_examples = len(ids)
-            pick_example = int(num_examples * p)
-            self.ids = ids[:pick_example]
-        else:
-            self.ids = ids
+        self.ids = list(self.coco.imgToAnns.keys())
 
         train_transform = transforms.Compose([
             # transforms.RandomResizedCrop(img_size)
