@@ -93,7 +93,7 @@ class CocoDetection(datasets.coco.CocoDetection):
 if __name__ == '__main__':
   root_path = '/projectnb/ivc-ml/sunxm/datasets/mscoco_2014/'
   data_split = 'train2014'
-  dataset = CocoDetection(root_path,  data_split, label_mask=None, partial=0.1)
+  dataset = CocoDetection(root_path,  data_split)
   batch = dataset[100]
   import pdb
   pdb.set_trace()
