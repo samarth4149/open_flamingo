@@ -83,8 +83,6 @@ def main():
     if args.model != "open_flamingo" and args.shots != [0]:
         raise ValueError("Only 0 shot eval is supported for non-open_flamingo models")
 
-    results = defaultdict(list)
-
     if args.eval_coco:
         print("Evaluating on COCO...")
         scores = []
