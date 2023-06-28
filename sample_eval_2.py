@@ -115,7 +115,64 @@ Details: In the text we expect an <image> special token to indicate where an ima
 """
 tokenizer.padding_side = "left" # For generation padding tokens should be on the left
 lang_x = tokenizer(
-    ["<image>Question: there is a dog: False. <|endofchunk|><image> there is a cat: True.<|endofchunk|><image>There are many dishes:"],
+    ["<image> there is a dog: False. <|endofchunk|><image> there is a cat: True.<|endofchunk|><image> there are many dishes:"],
+    return_tensors="pt",
+)
+
+
+"""
+Step 4: Generate text
+"""
+generated_text = model.generate(
+    vision_x=vision_x,
+    lang_x=lang_x["input_ids"],
+    attention_mask=lang_x["attention_mask"],
+    max_new_tokens=20,
+    num_beams=3,
+)
+
+print("Generated text: ", tokenizer.decode(generated_text[0]))
+
+lang_x = tokenizer(
+    ["<image> there is a dog: False. <|endofchunk|><image> there is a cat: True.<|endofchunk|><image> there is a cat:"],
+    return_tensors="pt",
+)
+
+
+"""
+Step 4: Generate text
+"""
+generated_text = model.generate(
+    vision_x=vision_x,
+    lang_x=lang_x["input_ids"],
+    attention_mask=lang_x["attention_mask"],
+    max_new_tokens=20,
+    num_beams=3,
+)
+
+print("Generated text: ", tokenizer.decode(generated_text[0]))
+
+lang_x = tokenizer(
+    ["<image> there is a dog: False. <|endofchunk|><image> there is a cat: True.<|endofchunk|><image> there is a dog:"],
+    return_tensors="pt",
+)
+
+
+"""
+Step 4: Generate text
+"""
+generated_text = model.generate(
+    vision_x=vision_x,
+    lang_x=lang_x["input_ids"],
+    attention_mask=lang_x["attention_mask"],
+    max_new_tokens=20,
+    num_beams=3,
+)
+
+print("Generated text: ", tokenizer.decode(generated_text[0]))
+
+lang_x = tokenizer(
+    ["<image> there is a cat: True <|endofchunk|><image> there is a dog: False.<|endofchunk|><image> there is a dog:"],
     return_tensors="pt",
 )
 
