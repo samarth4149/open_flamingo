@@ -87,22 +87,21 @@ def main():
 
     if args.eval_coco:
         print("Evaluating on COCO...")
-        for shot in args.shots:
-            scores = []
-            for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
-                map_score = evaluate_captioning(
-                    args,
-                    eval_model=eval_model,
-                    num_shots=shot,
-                    seed=seed,
-                    dataset_name="coco",
-                )
-                print(f"Shots {shot} Trial {trial} CIDEr score: {cider_score}")
-                scores.append(cider_score)
-            print(f"Shots {shot} Mean CIDEr score: {np.mean(scores)}")
-            results["coco"].append(
-                {"shots": shot, "trials": scores, "mean": np.mean(scores)}
+        scores = []
+        for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
+            map_score = evaluate_captioning(
+                args,
+                eval_model=eval_model,
+                num_shots=shot,
+                seed=seed,
+                dataset_name="coco",
             )
+            print(f"Shots {shot} Trial {trial} CIDEr score: {cider_score}")
+            scores.append(cider_score)
+        print(f"Shots {shot} Mean CIDEr score: {np.mean(scores)}")
+        results["coco"].append(
+            {"shots": shot, "trials": scores, "mean": np.mean(scores)}
+        )
 
     if args.results_file is not None:
         with open(args.results_file, "w") as f:
