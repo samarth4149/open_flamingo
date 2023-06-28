@@ -88,24 +88,12 @@ def main():
     if args.eval_coco:
         print("Evaluating on COCO...")
         scores = []
-        for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
-            map_score = evaluate_captioning(
-                args,
-                eval_model=eval_model,
-                num_shots=shot,
-                seed=seed,
-                dataset_name="coco",
-            )
-            print(f"Shots {shot} Trial {trial} CIDEr score: {cider_score}")
-            scores.append(cider_score)
-        print(f"Shots {shot} Mean CIDEr score: {np.mean(scores)}")
-        results["coco"].append(
-            {"shots": shot, "trials": scores, "mean": np.mean(scores)}
+        map_score = evaluate_captioning(
+            args,
+            eval_model=eval_model,
+            dataset_name="coco",
         )
 
-    if args.results_file is not None:
-        with open(args.results_file, "w") as f:
-            json.dump(results, f)
 
 
 def get_random_indices(num_samples, query_set_size, full_dataset, seed):
@@ -141,11 +129,9 @@ def sample_batch_demos_from_query_set(query_set, num_samples, batch_size):
 def evaluate_captioning(
     args: argparse.Namespace,
     eval_model: BaseEvalModel,
-    seed: int = 42,
     max_generation_length: int = 20,
     num_beams: int = 3,
     length_penalty: float = -2.0,
-    num_shots: int = 8,
     dataset_name: str = "coco",
 ):
     """Evaluate a model on COCO dataset.
