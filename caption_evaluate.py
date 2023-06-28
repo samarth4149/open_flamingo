@@ -83,9 +83,6 @@ def main():
     if args.model != "open_flamingo" and args.shots != [0]:
         raise ValueError("Only 0 shot eval is supported for non-open_flamingo models")
 
-    if len(args.trial_seeds) != args.num_trials:
-        raise ValueError("Number of trial seeds must be == number of trials.")
-
     results = defaultdict(list)
 
     if args.eval_coco:
@@ -168,11 +165,6 @@ def evaluate_captioning(
 
     """
     if dataset_name == "coco":
-        # build train dataset
-        train_dataset = CocoDetection(
-            root=args.coco_dataroot, data_split='train2014', img_size=224,
-        )
-
         # build test dataset
         test_dataset = CocoDetection(
             root=args.coco_dataroot, data_split='val2014', img_size=224,
@@ -198,6 +190,9 @@ def evaluate_captioning(
         new_predictions = [
             postprocess_captioning_generation(out, split_word='.').replace('"', "") for out in outputs
         ]
+
+        import pdb
+        pdb.set_trace()
 
         # TODO: extract the nouns based on parser,
         # TODO: merge nouns based on wordnet
