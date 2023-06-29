@@ -150,7 +150,7 @@ def evaluate_captioning(
     if dataset_name == "coco":
         # build test dataset
         test_dataset = CocoDetection(
-            root=args.coco_dataroot, data_split='val2014', img_size=224,
+            root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
         )
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)

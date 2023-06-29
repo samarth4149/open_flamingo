@@ -12,7 +12,7 @@ from randaugment import RandAugment
 
 
 class CocoDetection(datasets.coco.CocoDetection):
-    def __init__(self, root, data_split, img_size=224):
+    def __init__(self, root, data_split, transform):
         # super(CocoDetection, self).__init__()
         self.classnames = ["person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
                            "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
@@ -34,27 +34,34 @@ class CocoDetection(datasets.coco.CocoDetection):
         self.data_split = data_split
         self.ids = list(self.coco.imgToAnns.keys())
 
-        train_transform = transforms.Compose([
-            # transforms.RandomResizedCrop(img_size)
-            transforms.Resize((img_size, img_size)),
-            CutoutPIL(cutout_factor=0.5),
-            RandAugment(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
-        ])
-        test_transform = transforms.Compose([
-            # transforms.CenterCrop(img_size),
-            transforms.Resize((img_size, img_size)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
-        ])
+        # train_transform = transforms.Compose([
+        #     # transforms.RandomResizedCrop(img_size)
+        #     transforms.Resize((img_size, img_size)),
+        #     CutoutPIL(cutout_factor=0.5),
+        #     RandAugment(),
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
+        # ])
+        # test_transform = transforms.Compose([
+        #     # transforms.CenterCrop(img_size),
+        #     transforms.Resize((img_size, img_size)),
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
+        # ])
 
-        if self.data_split == 'train2014':
-            self.transform = train_transform
-        elif self.data_split == "val2014":
-            self.transform = test_transform
-        else:
-            raise ValueError('data split = %s is not supported in mscoco' % self.data_split)
+
+
+        # if self.data_split == 'train2014':
+        #     self.transform = train_transform
+        # elif self.data_split == "val2014":
+        #     self.transform = test_transform
+        # else:
+        #     raise ValueError('data split = %s is not supported in mscoco' % self.data_split)
+
+        import pdb
+        pdb.set_trace()
+
+        self.transform = transform
 
         self.cat2cat = dict()
         cats_keys = [*self.coco.cats.keys()]
@@ -81,10 +88,10 @@ class CocoDetection(datasets.coco.CocoDetection):
 
         path = coco.loadImgs(img_id)[0]['file_name']
         img = Image.open(os.path.join(self.root, self.data_split, path)).convert('RGB')
-        # if self.transform is not None:
-        #     img = self.transform(img)
+        if self.transform is not None:
+            img = self.transform(img)
 
-        return [img], target
+        return img, target
 
     def name(self):
         return 'coco'
