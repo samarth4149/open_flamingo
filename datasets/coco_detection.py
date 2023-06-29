@@ -58,8 +58,6 @@ class CocoDetection(datasets.coco.CocoDetection):
         # else:
         #     raise ValueError('data split = %s is not supported in mscoco' % self.data_split)
 
-        import pdb
-        pdb.set_trace()
 
         self.transform = transform
 

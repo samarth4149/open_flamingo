@@ -160,10 +160,11 @@ def evaluate_captioning(
 
     for batch in iter(test_dataloader):
         batch_images, batch_target = batch
+
+        batch_images = batch_images.unsqueeze(1).unsqueeze(1)
+
         import pdb
         pdb.set_trace()
-
-        batch_images = batch_images.unsqueeze(2)
 
         batch_text = ["<image>caption:"] * len(batch_images)
 
