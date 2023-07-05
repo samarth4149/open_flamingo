@@ -218,6 +218,8 @@ def evaluate_captioning(
         for class_name in class_names:
             synonym = Synonyms(search_string=class_name)
             synonym_results = synonym.find_synonyms()
+            import pdb
+            pdb.set_trace()
             class_synonyms.append(synonym_results)
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
