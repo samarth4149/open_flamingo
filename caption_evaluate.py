@@ -14,6 +14,9 @@ import more_itertools
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+import sng_parser
+from wordhoard import Synonyms
+from sklearn.metrics import average_precision_score
 
 #
 from open_flamingo.eval.coco_metric import compute_cider, postprocess_captioning_generation
@@ -108,6 +111,28 @@ def get_random_indices(num_samples, query_set_size, full_dataset, seed):
     return random_indices
 
 
+def compute_map(y_true, y_pred):
+    """
+    Compute Mean Average Precision (mAP) for binary multi-label classification
+
+    Args:
+    y_true: ground-truth label array of size [batch_size, num_class]
+    y_pred: prediction array of size [batch_size, num_class]
+
+    Returns:
+    mAP score
+    """
+
+    num_class = y_true.shape[1]
+    APs = []
+
+    for i in range(num_class):
+        AP = average_precision_score(y_true[:, i], y_pred[:, i])
+        APs.append(AP)
+
+    mAP = np.mean(APs)
+    return mAP
+
 def get_query_set(train_dataset, query_set_size, seed):
     np.random.seed(seed)
     query_set = np.random.choice(len(train_dataset), query_set_size, replace=False)
@@ -119,6 +144,41 @@ def prepare_eval_samples(test_dataset, num_samples, seed):
     random_indices = np.random.choice(len(test_dataset), num_samples, replace=False)
     return torch.utils.data.Subset(test_dataset, random_indices)
 
+
+def create_html_page(triplets):
+    """
+    Creates an HTML page to visualize the triplets.
+
+    Args:
+    triplets: A list of triplets. Each triplet is a tuple (image_path, predictions, labels), where
+        - image_path is a string path to the image file
+        - predictions is a list of predicted labels (strings)
+        - labels is a list of ground truth labels (strings)
+
+    Returns:
+    An HTML string.
+    """
+    html = ["<html><body><table>"]
+
+    # add a row for every 3 triplets
+    for i in range(0, len(triplets), 3):
+        html.append("<tr>")
+        for j in range(3):
+            if i + j < len(triplets):
+                image_path, predictions, labels = triplets[i + j]
+                html.append("<td>")
+                html.append(f'<img src="file://{image_path}" width="300" height="300"><br>')
+                html.append("Predictions:<br>")
+                html.append(', '.join(predictions))
+                html.append("<br>")
+                html.append("Labels:<br>")
+                html.append(', '.join(labels))
+                html.append("</td>")
+        html.append("</tr>")
+
+    html.append("</table></body></html>")
+
+    return "\n".join(html)
 
 def sample_batch_demos_from_query_set(query_set, num_samples, batch_size):
     return [random.sample(query_set, num_samples) for _ in range(batch_size)]
@@ -152,19 +212,26 @@ def evaluate_captioning(
         test_dataset = CocoDetection(
             root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
         )
+        class_synonyms = []
+        class_names = test_dataset.classnames
+        class_names_np = np.array(class_names)
+        for class_name in class_names:
+            synonym = Synonyms(search_string=class_name)
+            synonym_results = synonym.find_synonyms()
+            class_synonyms.append(synonym_results)
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
     predictions = defaultdict()
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
+    targets = []
+    preds = []
+    triplets = []
     for batch in iter(test_dataloader):
-        batch_images, batch_target = batch
+        batch_images, batch_target, batch_path = batch
 
         batch_images = batch_images.unsqueeze(1).unsqueeze(1)
-
-        import pdb
-        pdb.set_trace()
 
         batch_text = ["<image>caption:"] * len(batch_images)
 
@@ -183,15 +250,54 @@ def evaluate_captioning(
         import pdb
         pdb.set_trace()
 
-        # TODO: extract the nouns based on parser,
-        # TODO: merge nouns based on wordnet
-        # TODO: compute mAP with the ground truth label
-        # TODO: visualize the caption with test images
+        # extract the nouns based on parser,
+        batch_words = []
+        for pred in new_predictions:
+            pred_graph = sng_parser.parse(pred)
+            pred_entities = pred_graph['entities']
+            words = []
+            for entity in pred_entities:
+                words.append(entity['lemma_head'])
+            batch_words.append(words)
 
-        for i, sample in enumerate(batch):
-            predictions[sample["image_id"]] = {
-                "caption": new_predictions[i],
-            }
+        # Generate predictions from captions
+        predictions = np.zeros(len(new_predictions), len(class_names))
+        for b_idx, words in enumerate(batch_words):
+            for word in words:
+                for c_idx, class_synonym in enumerate(class_synonyms):
+                    if word in class_synonym:
+                        predictions[b_idx, c_idx] = 1
+
+        # compute mAP with the ground truth label
+        targets.append(batch_target)
+        preds.append(predictions)
+
+        # generate triplets for visualization
+        # # Example usage:
+        visual_path = ''
+        for path, prediction, target in zip(batch_path, predictions, batch_target):
+            # image_path
+            image_path = os.path.join(visual_path, path)
+            # predict list
+            pred_classes = class_names_np[prediction == 1]
+            # ground-truth label list
+            target_np = batch_target.cpu().numpy()
+            gt_classes = class_names_np[target_np == 1]
+            triplets.append((image_path, pred_classes, gt_classes))
+
+
+    # compute mAP with the ground truth label
+    preds = np.concatenate(preds, axis=0)
+    targets = torch.cat(targets, dim=0)
+    mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds)
+    print('mAP is %0.2f' % mAP)
+
+    # visualize the prediction
+    html = create_html_page(triplets)
+
+    # write the html string to a file
+    with open('mscoco_val.html', 'w') as f:
+        f.write(html)
 
     # save the predictions to a temporary file
     results_path = f"{dataset_name}results_{uuid.uuid4()}.json"

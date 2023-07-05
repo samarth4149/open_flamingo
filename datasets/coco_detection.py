@@ -89,7 +89,7 @@ class CocoDetection(datasets.coco.CocoDetection):
         if self.transform is not None:
             img = self.transform(img)
 
-        return img, target
+        return img, target, path
 
     def name(self):
         return 'coco'
