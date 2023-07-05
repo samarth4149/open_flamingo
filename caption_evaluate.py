@@ -18,6 +18,8 @@ import sng_parser
 from wordhoard import Synonyms
 from sklearn.metrics import average_precision_score
 
+import nltk
+from nltk.corpus import wordnet
 #
 from open_flamingo.eval.coco_metric import compute_cider, postprocess_captioning_generation
 # from eval_datasets import CaptionDataset, VQADataset, ImageNetDataset, ImageDataset
@@ -216,11 +218,13 @@ def evaluate_captioning(
         class_names = test_dataset.classnames
         class_names_np = np.array(class_names)
         for class_name in class_names:
-            synonym = Synonyms(search_string=class_name)
-            synonym_results = synonym.find_synonyms()
+            synonyms = []
+            for syn in wordnet.synsets(class_name):
+                for l in syn.lemmas():
+                    synonyms.append(l.name())
             import pdb
             pdb.set_trace()
-            class_synonyms.append(synonym_results)
+            class_synonyms.append(synonyms)
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
