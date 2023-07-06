@@ -273,9 +273,6 @@ def evaluate_captioning(
         targets.append(batch_target)
         preds.append(predictions)
 
-        import pdb
-        pdb.set_trace()
-
         # generate triplets for visualization
         # # Example usage:
         visual_path = ''
@@ -287,7 +284,10 @@ def evaluate_captioning(
             # ground-truth label list
             target_np = batch_target.cpu().numpy()
             gt_classes = class_names_np[target_np == 1]
-            triplets.append((image_path, pred_classes, gt_classes))
+            triplet = (image_path, pred_classes, gt_classes)
+            import pdb
+            pdb.set_trace()
+            triplets.append(triplet)
 
 
     # compute mAP with the ground truth label
