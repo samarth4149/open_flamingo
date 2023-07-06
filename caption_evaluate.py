@@ -283,6 +283,8 @@ def evaluate_captioning(
             pred_classes = class_names_np[prediction == 1]
             # ground-truth label list
             target_np = batch_target.cpu().numpy()
+            import pdb
+            pdb.set_trace()
             gt_classes = class_names_np[target_np == 1]
             triplet = (image_path, pred_classes, gt_classes)
             import pdb
