@@ -232,7 +232,7 @@ def evaluate_captioning(
     targets = []
     preds = []
     triplets = []
-    for batch in iter(test_dataloader):
+    for batch in tqdm(iter(test_dataloader)):
         batch_images, batch_target, batch_path = batch
         batch_target = batch_target.sum(dim=1)
 
