@@ -234,6 +234,7 @@ def evaluate_captioning(
     triplets = []
     for batch in iter(test_dataloader):
         batch_images, batch_target, batch_path = batch
+        batch_target = batch_target.sum(dim=1)
 
         batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
