@@ -222,8 +222,6 @@ def evaluate_captioning(
             for syn in wordnet.synsets(class_name):
                 for l in syn.lemmas():
                     synonyms.append(l.name())
-            import pdb
-            pdb.set_trace()
             class_synonyms.append(synonyms)
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
