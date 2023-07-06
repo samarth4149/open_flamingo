@@ -262,7 +262,7 @@ def evaluate_captioning(
             batch_words.append(words)
 
         # Generate predictions from captions
-        predictions = np.zeros((len(new_predictions), len(class_names)), type=np.int32)
+        predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
         for b_idx, words in enumerate(batch_words):
             for word in words:
                 for c_idx, class_synonym in enumerate(class_synonyms):
