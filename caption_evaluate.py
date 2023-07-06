@@ -276,7 +276,7 @@ def evaluate_captioning(
 
         # generate triplets for visualization
         # # Example usage:
-        visual_path = ''
+        visual_path = '/Users/sunxm/Documents/research/datasets/mscoco_2014/val2014'
         for path, prediction, target in zip(batch_path, predictions, batch_target):
             # image_path
             image_path = os.path.join(visual_path, path)
@@ -284,12 +284,8 @@ def evaluate_captioning(
             pred_classes = class_names_np[prediction == 1]
             # ground-truth label list
             target_np = target.cpu().numpy()
-            import pdb
-            pdb.set_trace()
             gt_classes = class_names_np[target_np == 1]
             triplet = (image_path, pred_classes, gt_classes)
-            import pdb
-            pdb.set_trace()
             triplets.append(triplet)
 
 
