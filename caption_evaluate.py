@@ -251,9 +251,6 @@ def evaluate_captioning(
             postprocess_captioning_generation(out, split_words=['.', '\n', 'caption', 'Caption']).replace('"', "") for out in outputs
         ]
 
-        import pdb
-        pdb.set_trace()
-
         # extract the nouns based on parser,
         batch_words = []
         for pred in new_predictions:
@@ -275,6 +272,9 @@ def evaluate_captioning(
         # compute mAP with the ground truth label
         targets.append(batch_target)
         preds.append(predictions)
+
+        import pdb
+        pdb.set_trace()
 
         # generate triplets for visualization
         # # Example usage:
