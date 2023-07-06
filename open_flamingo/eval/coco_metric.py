@@ -18,5 +18,7 @@ def compute_cider(
     return coco_eval.eval
 
 
-def postprocess_captioning_generation(predictions, split_word='Output:'):
-    return predictions.split(f"{split_word}", 1)[0]
+def postprocess_captioning_generation(predictions, split_words=['Output:']):
+    for split_word in split_words:
+        predictions = predictions.split(f"{split_word}", 1)[0]
+    return predictions

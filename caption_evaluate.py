@@ -248,7 +248,7 @@ def evaluate_captioning(
         )
 
         new_predictions = [
-            postprocess_captioning_generation(out, split_word='.').replace('"', "") for out in outputs
+            postprocess_captioning_generation(out, split_words=['.', '\n', 'caption', 'Caption']).replace('"', "") for out in outputs
         ]
 
         import pdb
