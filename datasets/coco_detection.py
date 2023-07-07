@@ -91,8 +91,8 @@ class CocoDetection(datasets.coco.CocoDetection):
 
         return img, target, path
 
-    def __len__(self):
-        return 8
+    # def __len__(self):
+    #     return 8
 
     def name(self):
         return 'coco'

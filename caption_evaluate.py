@@ -67,6 +67,12 @@ parser.add_argument(
     default=None,
 )
 
+parser.add_argument(
+    "--coco_prompts",
+    type=str,
+    default='caption:',
+)
+
 
 parser.add_argument(
     "--model",
@@ -237,7 +243,7 @@ def evaluate_captioning(
 
         batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
-        prompt = 'a normal picture that shows'
+        prompt = args.coco_prompt
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         outputs = eval_model.get_outputs(
@@ -252,8 +258,6 @@ def evaluate_captioning(
             postprocess_captioning_generation(out, split_words=['.', '\n', prompt, prompt.capitalize()]).replace('"', "") for out in outputs
         ]
 
-        import pdb
-        pdb.set_trace()
         # extract the nouns based on parser,
         batch_words = []
         for pred in new_predictions:
