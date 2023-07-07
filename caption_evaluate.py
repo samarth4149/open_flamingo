@@ -243,7 +243,7 @@ def evaluate_captioning(
 
         batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
-        prompt = args.coco_prompt
+        prompt = args.coco_prompts
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         outputs = eval_model.get_outputs(
