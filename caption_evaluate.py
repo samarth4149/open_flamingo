@@ -226,7 +226,6 @@ def evaluate_captioning(
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
-    predictions = defaultdict()
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
     targets = []
@@ -290,13 +289,13 @@ def evaluate_captioning(
 
 
     # compute mAP with the ground truth label
-    import pdb
-    pdb.set_trace()
     preds = np.concatenate(preds, axis=0)
     targets = torch.cat(targets, dim=0)
     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds)
     print('mAP is %0.2f' % mAP)
 
+    import pdb
+    pdb.set_trace()
     # visualize the prediction
     html = create_html_page(triplets)
 
