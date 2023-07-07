@@ -6,9 +6,6 @@ from pycocotools.coco import COCO
 from PIL import Image
 import torch
 import os
-import torchvision.transforms as transforms
-from datasets.helper import CutoutPIL
-from randaugment import RandAugment
 
 
 class CocoDetection(datasets.coco.CocoDetection):
@@ -90,9 +87,6 @@ class CocoDetection(datasets.coco.CocoDetection):
             img = self.transform(img)
 
         return img, target, path
-
-    # def __len__(self):
-    #     return 8
 
     def name(self):
         return 'coco'
