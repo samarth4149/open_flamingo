@@ -237,7 +237,8 @@ def evaluate_captioning(
 
         batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
-        batch_text = ["<image>caption:"] * len(batch_images)
+        prompt = 'a normal picture that shows'
+        batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         outputs = eval_model.get_outputs(
             batch_images=batch_images,
@@ -248,7 +249,7 @@ def evaluate_captioning(
         )
 
         new_predictions = [
-            postprocess_captioning_generation(out, split_words=['.', '\n', 'caption', 'Caption']).replace('"', "") for out in outputs
+            postprocess_captioning_generation(out, split_words=['.', '\n', prompt, prompt.capitalize()]).replace('"', "") for out in outputs
         ]
 
         # extract the nouns based on parser,
