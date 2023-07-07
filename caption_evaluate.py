@@ -290,6 +290,8 @@ def evaluate_captioning(
 
 
     # compute mAP with the ground truth label
+    import pdb
+    pdb.set_trace()
     preds = np.concatenate(preds, axis=0)
     targets = torch.cat(targets, dim=0)
     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds)
@@ -302,31 +304,7 @@ def evaluate_captioning(
     with open('mscoco_val.html', 'w') as f:
         f.write(html)
 
-    # save the predictions to a temporary file
-    results_path = f"{dataset_name}results_{uuid.uuid4()}.json"
 
-    with open(results_path, "w") as f:
-        f.write(
-            json.dumps(
-                [
-                    {"image_id": k, "caption": predictions[k]["caption"]}
-                    for k in predictions
-                ],
-                indent=4,
-            )
-        )
-
-    metrics = compute_cider(
-        result_path=results_path,
-        annotations_path=args.coco_annotations_json_path
-        if dataset_name == "coco"
-        else args.flickr_annotations_json_path,
-    )
-
-    # delete the temporary file
-    os.remove(results_path)
-
-    return metrics["CIDEr"] * 100.0
 
 
 def evaluate_vqa(
@@ -484,8 +462,6 @@ def evaluate_vqa(
     os.remove(f"{dataset_name}results_{random_uuid}.json")
 
     return acc
-
-
 
 if __name__ == "__main__":
     main()
