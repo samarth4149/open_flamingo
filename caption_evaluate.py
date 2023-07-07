@@ -129,7 +129,7 @@ def compute_map(y_true, y_pred):
     APs = []
 
     for i in range(num_class):
-        AP = average_precision_score(y_true[:, i], y_pred[:, i])
+        AP = average_precision_score(y_true[:, i: i+1], y_pred[:, i: i+1])
         APs.append(AP)
 
     mAP = np.mean(APs)
@@ -234,7 +234,7 @@ def evaluate_captioning(
     triplets = []
     for batch in tqdm(iter(test_dataloader)):
         batch_images, batch_target, batch_path = batch
-        batch_target = batch_target.sum(dim=1)
+        batch_target = batch_target.max(dim=1)[0]
 
         batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
