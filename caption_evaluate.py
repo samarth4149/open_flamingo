@@ -301,13 +301,14 @@ def evaluate_captioning(
     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds)
     print('mAP is %0.2f' % mAP)
 
-    import pdb
-    pdb.set_trace()
     # visualize the prediction
     html = create_html_page(triplets)
 
     # write the html string to a file
-    with open('mscoco_val.html', 'w') as f:
+    html_folder = 'html'
+    if not os.path.isdir(html_folder):
+        os.makedirs(html_folder)
+    with open(os.path.join(html_folder, 'coco_flamingo_%s'% ('_'.join(args.coco_prompts))), 'w') as f:
         f.write(html)
 
 
