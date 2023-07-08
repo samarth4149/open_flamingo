@@ -91,9 +91,6 @@ def main():
     }
     eval_model = module.EvalModel(model_args)
 
-    if args.model != "open_flamingo" and args.shots != [0]:
-        raise ValueError("Only 0 shot eval is supported for non-open_flamingo models")
-
     if args.eval_coco:
         print("Evaluating on COCO...")
         scores = []
