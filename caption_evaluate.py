@@ -228,7 +228,7 @@ def evaluate_captioning(
         class_names = test_dataset.classnames
         class_names_np = np.array(class_names)
         for class_name in class_names:
-            synonyms = []
+            synonyms = [class_name]
             for syn in wordnet.synsets(class_name):
                 for l in syn.lemmas():
                     synonyms.append(l.name())
@@ -259,29 +259,29 @@ def evaluate_captioning(
             length_penalty=length_penalty,
         )
 
-        import pdb
-        pdb.set_trace()
-
-        new_predictions = [
-            postprocess_captioning_generation(out, split_words=['.', '\n', prompt, prompt.capitalize()]).replace('"', "") for out in outputs
-        ]
+        if args.model == 'open_flamingo':
+            new_predictions = [
+                postprocess_captioning_generation(out, split_words=['.', '\n', prompt, prompt.capitalize()]).replace('"', "") for out in outputs
+            ]
+        else:
+            new_predictions = outputs
 
         # extract the nouns based on parser,
-        batch_words = []
-        for pred in new_predictions:
-            pred_graph = sng_parser.parse(pred)
-            pred_entities = pred_graph['entities']
-            words = []
-            for entity in pred_entities:
-                words.append(entity['lemma_head'])
-            batch_words.append(words)
+        # batch_words = []
+        # for pred in new_predictions:
+        #     pred_graph = sng_parser.parse(pred)
+        #     pred_entities = pred_graph['entities']
+        #     words = []
+        #     for entity in pred_entities:
+        #         words.append(entity['lemma_head'])
+        #     batch_words.append(words)
 
         # Generate predictions from captions
         predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
-        for b_idx, words in enumerate(batch_words):
-            for word in words:
-                for c_idx, class_synonym in enumerate(class_synonyms):
-                    if word in class_synonym:
+        for b_idx, caption in enumerate(new_predictions):
+            for c_idx, class_synonym in enumerate(class_synonyms):
+                for synonym in class_synonym:
+                    if synonym in caption:
                         predictions[b_idx, c_idx] = 1
 
         # compute mAP with the ground truth label
