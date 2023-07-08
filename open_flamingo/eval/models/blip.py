@@ -33,6 +33,8 @@ class EvalModel(BaseEvalModel):
         self.model.to(self.device)
         self.model.eval()
         self.processor.tokenizer.padding_side = "left"
+        import pdb
+        pdb.set_trace()
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         """Preprocess images and stack them.
