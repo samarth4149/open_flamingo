@@ -245,7 +245,8 @@ def evaluate_captioning(
         batch_images, batch_target, batch_path = batch
         batch_target = batch_target.max(dim=1)[0]
 
-        batch_images = batch_images.unsqueeze(1).unsqueeze(1)
+        if args.model == 'open_flamingo':
+            batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
         prompt = args.coco_prompts
         batch_text = [f"<image>{prompt} "] * len(batch_images)
@@ -257,6 +258,9 @@ def evaluate_captioning(
             num_beams=num_beams,
             length_penalty=length_penalty,
         )
+
+        import pdb
+        pdb.set_trace()
 
         new_predictions = [
             postprocess_captioning_generation(out, split_words=['.', '\n', prompt, prompt.capitalize()]).replace('"', "") for out in outputs
