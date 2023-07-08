@@ -6,6 +6,7 @@ from pycocotools.coco import COCO
 from PIL import Image
 import torch
 import os
+from torchvision.transforms import transforms
 
 
 class CocoDetection(datasets.coco.CocoDetection):
@@ -84,7 +85,16 @@ class CocoDetection(datasets.coco.CocoDetection):
         path = coco.loadImgs(img_id)[0]['file_name']
         img = Image.open(os.path.join(self.root, self.data_split, path)).convert('RGB')
         if self.transform is not None:
-            img = self.transform(img)
+            if isinstance(self.transform, transforms.Compose):
+                img = self.transform(img)
+            else:
+                img = self.transform(img, return_tensors="pt")[
+                        "pixel_values"
+                    ]
+                import pdb
+                pdb.set_trace()
+
+                img = img.squeeze(0)
 
         return img, target, path
 
