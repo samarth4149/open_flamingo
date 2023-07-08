@@ -214,9 +214,16 @@ def evaluate_captioning(
     """
     if dataset_name == "coco":
         # build test dataset
-        test_dataset = CocoDetection(
-            root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
-        )
+        if args.model == 'open_flamingo':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
+            )
+        elif args.model == 'blip':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.processor.image_processor
+            )
+        else:
+            raise ValueError(f'model {args.model} is not supported')
         class_synonyms = []
         class_names = test_dataset.classnames
         class_names_np = np.array(class_names)
