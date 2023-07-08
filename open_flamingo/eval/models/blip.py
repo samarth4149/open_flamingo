@@ -33,8 +33,6 @@ class EvalModel(BaseEvalModel):
         self.model.to(self.device)
         self.model.eval()
         self.processor.tokenizer.padding_side = "left"
-        import pdb
-        pdb.set_trace()
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         """Preprocess images and stack them.
@@ -73,7 +71,7 @@ class EvalModel(BaseEvalModel):
     def get_outputs(
         self,
         batch_text: List[str],
-        batch_images: List[List[Image.Image]],
+        batch_images: torch.tensor,
         max_generation_length: int,
         num_beams: int,
         length_penalty: float,
@@ -90,7 +88,8 @@ class EvalModel(BaseEvalModel):
 
         with torch.inference_mode():
             outputs = self.model.generate(
-                self._prepare_images(batch_images).to(self.device),
+                # self._prepare_images(batch_images).to(self.device),
+                batch_images.to(self.device),
                 input_ids.to(self.device),
                 attention_mask=attention_mask.to(self.device),
                 max_new_tokens=max_generation_length,

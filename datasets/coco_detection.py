@@ -91,9 +91,6 @@ class CocoDetection(datasets.coco.CocoDetection):
                 img = self.transform(img, return_tensors="pt")[
                         "pixel_values"
                     ]
-                import pdb
-                pdb.set_trace()
-
                 img = img.squeeze(0)
 
         return img, target, path
