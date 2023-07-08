@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N a_normal_picture_that_shows
+#$ -N a_photo_of
 
 #$ -m bea
 
@@ -41,8 +41,12 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
-PROCESSOR_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
+LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/llama/llama-7b-hf"
+LM_TOKENIZER_PATH="/projectnb/ivc-ml/sunxm/ckpt/llama/llama-7b-hf"
+VISION_ENCODER_NAME="ViT-L-14"
+VISION_ENCODER_PRETRAINED="openai"
+CKPT_PATH="/projectnb/ivc-ml/sunxm/ckpt/open-flamingo/checkpoint.pt"
 DEVICE=0
 
-python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  --processor_path $PROCESSOR_PATH --device $DEVICE --coco_prompts "a normal picture that shows" --model "blip"
+
+python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  --lm_path $LM_PATH --lm_tokenizer_path $LM_TOKENIZER_PATH --vision_encoder_path $VISION_ENCODER_NAME --vision_encoder_pretrained $VISION_ENCODER_PRETRAINED  --checkpoint_path $CKPT_PATH --cross_attn_every_n_layers 4 --device $DEVICE --coco_prompts "a photo of "

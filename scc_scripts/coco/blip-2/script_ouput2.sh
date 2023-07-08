@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N a_normal_picture_that_shows
+#$ -N Output
 
 #$ -m bea
 
@@ -45,4 +45,4 @@ LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
 PROCESSOR_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
 DEVICE=0
 
-python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  --processor_path $PROCESSOR_PATH --device $DEVICE --coco_prompts "a normal picture that shows" --model "blip"
+python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  --processor_path $PROCESSOR_PATH --device $DEVICE --coco_prompts "Output:" --model "blip"
