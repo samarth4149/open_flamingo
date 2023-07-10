@@ -127,11 +127,11 @@ class MiniGPT4(Blip2Base):
 
     def encode_img(self, image):
         device = image.device
-        import pdb
-        pdb.set_trace()
-        if self.low_resource:
-            self.vit_to_cpu()
-            image = image.to("cpu")
+        # import pdb
+        # pdb.set_trace()
+        # if self.low_resource:
+        #     self.vit_to_cpu()
+        #     image = image.to("cpu")
 
         with self.maybe_autocast():
             image_embeds = self.ln_vision(self.visual_encoder(image)).to(device)
