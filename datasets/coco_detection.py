@@ -7,6 +7,7 @@ from PIL import Image
 import torch
 import os
 from torchvision.transforms import transforms
+from minigpt4.processors.blip_processors import Blip2ImageEvalProcessor
 
 
 class CocoDetection(datasets.coco.CocoDetection):
@@ -85,7 +86,7 @@ class CocoDetection(datasets.coco.CocoDetection):
         path = coco.loadImgs(img_id)[0]['file_name']
         img = Image.open(os.path.join(self.root, self.data_split, path)).convert('RGB')
         if self.transform is not None:
-            if isinstance(self.transform, transforms.Compose):
+            if isinstance(self.transform, transforms.Compose) or isinstance(self.transform, Blip2ImageEvalProcessor):
                 img = self.transform(img)
             else:
                 img = self.transform(img, return_tensors="pt")[

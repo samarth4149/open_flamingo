@@ -24,7 +24,8 @@ from nltk.corpus import wordnet
 from open_flamingo.eval.coco_metric import compute_cider, postprocess_captioning_generation
 # from eval_datasets import CaptionDataset, VQADataset, ImageNetDataset, ImageDataset
 from tqdm import tqdm
-
+from minigpt4.common.config import Config
+from minigpt4.eval import MiniGPT4
 
 # from eval_datasets import VQADataset, ImageNetDataset
 # from open_flamingo.eval.imagenet_utils import (
@@ -84,12 +85,18 @@ parser.add_argument(
 
 def main():
     args, leftovers = parser.parse_known_args()
-    module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
+    if args.model == 'minigpt4':
+        cfg = Config(args)
 
-    model_args = {
-        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
-    }
-    eval_model = module.EvalModel(model_args)
+        model = MiniGPT4(cfg.model_cfg, args.gpu_id)
+        vis_processor = model.vis_processor
+    else:
+        module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
+
+        model_args = {
+            leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
+        }
+        eval_model = module.EvalModel(model_args)
 
     if args.eval_coco:
         print("Evaluating on COCO...")
@@ -222,6 +229,10 @@ def evaluate_captioning(
             test_dataset = CocoDetection(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.processor.image_processor
             )
+        elif args.model == 'minigpt4':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.vis_processor
+            )
         else:
             raise ValueError(f'model {args.model} is not supported')
         class_synonyms = []
@@ -251,13 +262,16 @@ def evaluate_captioning(
         prompt = args.coco_prompts
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
-        outputs = eval_model.get_outputs(
-            batch_images=batch_images,
-            batch_text=batch_text,
-            max_generation_length=max_generation_length,
-            num_beams=num_beams,
-            length_penalty=length_penalty,
-        )
+        if args.model == 'minigpt4':
+            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
+        else:
+            outputs = eval_model.get_outputs(
+                batch_images=batch_images,
+                batch_text=batch_text,
+                max_generation_length=max_generation_length,
+                num_beams=num_beams,
+                length_penalty=length_penalty,
+            )
 
         if args.model == 'open_flamingo':
             new_predictions = [
@@ -265,16 +279,6 @@ def evaluate_captioning(
             ]
         else:
             new_predictions = outputs
-
-        # extract the nouns based on parser,
-        # batch_words = []
-        # for pred in new_predictions:
-        #     pred_graph = sng_parser.parse(pred)
-        #     pred_entities = pred_graph['entities']
-        #     words = []
-        #     for entity in pred_entities:
-        #         words.append(entity['lemma_head'])
-        #     batch_words.append(words)
 
         # Generate predictions from captions
         predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
