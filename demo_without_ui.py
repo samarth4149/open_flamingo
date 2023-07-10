@@ -21,7 +21,7 @@ def parse_args():
         "in xxx=yyy format will be merged into config file (deprecate), "
         "change to --cfg-options instead.",
     )
-    args_list = ["--cfg-path", "eval_configs/minigpt4_eval.yaml", "--gpu-id", 0]
+    args_list = ["--cfg-path", "minigpt4/eval_configs/minigpt4_eval.yaml", "--gpu-id", 0]
     args = parser.parse_args(args_list)
     return args
 
