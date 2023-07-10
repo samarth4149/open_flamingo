@@ -95,15 +95,14 @@ parser.add_argument("--cfg-path", required=True, help="path to configuration fil
 
 def main():
     args, leftovers = parser.parse_known_args()
+    model_args = {
+        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
+    }
     if args.model == 'minigpt4':
         cfg = Config(args)
-        eval_model = MiniGPT4(cfg.model_cfg, args.device)
+        eval_model = MiniGPT4(cfg.model_cfg, int(model_args["device"]))
     else:
         module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
-
-        model_args = {
-            leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
-        }
         eval_model = module.EvalModel(model_args)
 
     if args.eval_coco:
