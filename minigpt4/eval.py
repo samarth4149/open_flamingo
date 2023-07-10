@@ -109,37 +109,37 @@ class MiniGPT4():
         return new_predictions
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Demo")
-    parser.add_argument("--cfg-path", required=True, help="path to configuration file.")
-    parser.add_argument("--gpu-id", type=int, default=0, help="specify the gpu to load the model.")
-    parser.add_argument(
-        "--options",
-        nargs="+",
-        help="override some settings in the used config, the key-value pair "
-        "in xxx=yyy format will be merged into config file (deprecate), "
-        "change to --cfg-options instead.",
-    )
-    args_list = ["--cfg-path", "minigpt4/eval_configs/minigpt4_eval.yaml", "--gpu-id", 0]
-    args = parser.parse_args(args_list)
-    return args
+# def parse_args():
+#     parser = argparse.ArgumentParser(description="Demo")
+#     parser.add_argument("--cfg-path", required=True, help="path to configuration file.")
+#     parser.add_argument("--gpu-id", type=int, default=0, help="specify the gpu to load the model.")
+#     parser.add_argument(
+#         "--options",
+#         nargs="+",
+#         help="override some settings in the used config, the key-value pair "
+#         "in xxx=yyy format will be merged into config file (deprecate), "
+#         "change to --cfg-options instead.",
+#     )
+#     args_list = ["--cfg-path", "minigpt4/eval_configs/minigpt4_eval.yaml", "--gpu-id", 0]
+#     args = parser.parse_args(args_list)
+#     return args
 
 
-args = parse_args()
-cfg = Config(args)
-
-model = MiniGPT4(cfg.model_cfg, args.gpu_id)
-vis_processor = model.vis_processor
-
-
-img_path = "/projectnb/ivc-ml/sunxm/code/MiniGPT-4/test_examples/test1.png"
-
-raw_image = Image.open(img_path).convert('RGB')
-image = vis_processor(raw_image).unsqueeze(0).to('cuda:{}'.format(args.gpu_id))
-
-outputs = model.get_outputs(batch_images=image)
-
-print(outputs)
+# args = parse_args()
+# cfg = Config(args)
+#
+# model = MiniGPT4(cfg.model_cfg, args.gpu_id)
+# vis_processor = model.vis_processor
+#
+#
+# img_path = "/projectnb/ivc-ml/sunxm/code/MiniGPT-4/test_examples/test1.png"
+#
+# raw_image = Image.open(img_path).convert('RGB')
+# image = vis_processor(raw_image).unsqueeze(0).to('cuda:{}'.format(args.gpu_id))
+#
+# outputs = model.get_outputs(batch_images=image)
+#
+# print(outputs)
 
 
 
