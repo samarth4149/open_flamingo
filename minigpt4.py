@@ -104,6 +104,8 @@ seg_tokens = [
         ]
 
 seg_embs = [model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+import pdb
+pdb.set_trace()
 embs = [seg_embs[0],  image_emb,  seg_embs[1]]
 mixed_embs = torch.cat(embs, dim=1)
 
