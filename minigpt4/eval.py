@@ -131,8 +131,6 @@ cfg = Config(args)
 model = MiniGPT4(cfg.model_cfg, args.gpu_id)
 vis_processor = model.vis_processor
 
-import pdb
-pdb.set_trace()
 
 img_path = "/projectnb/ivc-ml/sunxm/code/MiniGPT-4/test_examples/test1.png"
 
@@ -142,5 +140,7 @@ image = vis_processor(raw_image).unsqueeze(0).to('cuda:{}'.format(args.gpu_id))
 outputs = model.get_outputs(batch_images=image)
 
 print(outputs)
+
+
 
 
