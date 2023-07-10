@@ -91,18 +91,17 @@ parser.add_argument(
     )
 
 parser.add_argument("--cfg-path", required=True, help="path to configuration file.")
-# parser.add_argument("--gpu-id", type=int, default=0, help="specify the gpu to load the model.")
+
 
 def main():
     args, leftovers = parser.parse_known_args()
-    import pdb
-    pdb.set_trace()
+
     model_args = {
         leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     }
     if args.model == 'minigpt4':
         cfg = Config(args)
-        eval_model = MiniGPT4(cfg.model_cfg, int(model_args["device"]))
+        eval_model = MiniGPT4(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
     else:
         module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
         eval_model = module.EvalModel(model_args)
