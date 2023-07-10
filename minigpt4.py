@@ -13,16 +13,7 @@ from minigpt4.conversation.conversation import Chat, CONV_VISION
 from transformers import StoppingCriteria, StoppingCriteriaList
 
 
-def process_output(input_text: str):
-    if input_text[0] == 0:  # the model might output a unknow token <unk> at the beginning. remove it
-        input_text = input_text[1:]
-    if input_text[0] == 1:  # some users find that there is a start token <s> at the beginning. remove it
-        input_text = input_text[1:]
 
-    output_text = model.llama_tokenizer.decode(input_text, add_special_tokens=False)
-    output_text = output_text.split('###')[0]  # remove the stop sign '###'
-    output_text = output_text.split('Assistant:')[-1].strip()
-    return output_text
 
 
 class StoppingCriteriaSub(StoppingCriteria):
@@ -67,6 +58,17 @@ class MiniGPT4():
     def expand_emb(emb, batch_size):
         return emb.tile((batch_size, 1))
 
+    def process_output(self, input_text: str):
+        if input_text[0] == 0:  # the model might output a unknow token <unk> at the beginning. remove it
+            input_text = input_text[1:]
+        if input_text[0] == 1:  # some users find that there is a start token <s> at the beginning. remove it
+            input_text = input_text[1:]
+
+        output_text = self.model.llama_tokenizer.decode(input_text, add_special_tokens=False)
+        output_text = output_text.split('###')[0]  # remove the stop sign '###'
+        output_text = output_text.split('Assistant:')[-1].strip()
+        return output_text
+
     def get_outputs(self, batch_images,
                     system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
                     sep = "###", prompt = 'describe the image as detailed as possible',
@@ -105,7 +107,9 @@ class MiniGPT4():
             temperature=temperature
         )
 
-        return outputs
+        new_predictions = [self.process_output(output) for output in outputs]
+
+        return new_predictions
 
 
 def parse_args():
@@ -136,11 +140,9 @@ img_path = "/projectnb/ivc-ml/sunxm/code/MiniGPT-4/test_examples/test1.png"
 raw_image = Image.open(img_path).convert('RGB')
 image = vis_processor(raw_image).unsqueeze(0).to('cuda:{}'.format(args.gpu_id))
 
-outputs = model.get_outputs(batch_images=image, )
+outputs = model.get_outputs(batch_images=image)
 
-new_predicitions = [process_output(output) for output in outputs]
-
-print(new_predicitions)
+print(outputs)
 
 
 
