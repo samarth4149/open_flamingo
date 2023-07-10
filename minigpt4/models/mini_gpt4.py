@@ -135,6 +135,8 @@ class MiniGPT4(Blip2Base):
 
         self.ln_vision.float()
         self.visual_encoder.float()
+        import pdb
+        pdb.set_trace()
         # with self.maybe_autocast():
         image_embeds = self.ln_vision(self.visual_encoder(image)).to(device)
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
