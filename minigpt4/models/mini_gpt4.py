@@ -133,6 +133,8 @@ class MiniGPT4(Blip2Base):
         #     self.vit_to_cpu()
         #     image = image.to("cpu")
 
+        self.ln_vision.float()
+        self.visual_encoder.float()
         # with self.maybe_autocast():
         image_embeds = self.ln_vision(self.visual_encoder(image)).to(device)
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
