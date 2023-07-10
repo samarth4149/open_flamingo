@@ -54,7 +54,7 @@ class MiniGPT4():
 
     @staticmethod
     def expand_emb(emb, batch_size):
-        return emb.tile((batch_size, 1))
+        return emb.tile((batch_size, 1,  1))
 
     def process_output(self, input_text: str):
         if input_text[0] == 0:  # the model might output a unknow token <unk> at the beginning. remove it
@@ -74,8 +74,6 @@ class MiniGPT4():
                     length_penalty=1, temperature=1.0):
         batch_images = batch_images.to(self.device)
         image_emb, _ = self.model.encode_img(batch_images)
-        import pdb
-        pdb.set_trace()
 
         messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", None)]
         sentence = self.create_prompt(system, sep, messages)
