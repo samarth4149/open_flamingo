@@ -30,16 +30,17 @@ class MiniGPT4():
     def __init__(self, model_config, vis_processor_cfg, gpu_id):
         self.model_config = model_config
         self.model_config.device_8bit = gpu_id
+        self.device = 'cuda:{}'.format(gpu_id)
         model_cls = registry.get_model_class(model_config.arch)
-        self.model = model_cls.from_config(model_config).to('cuda:{}'.format(gpu_id))
+        self.model = model_cls.from_config(model_config).to(self.device)
 
         # vis_processor_cfg = cfg.datasets_cfg.cc_sbu_align.vis_processor.train
         self.vis_processor = registry.get_processor_class(vis_processor_cfg.name).from_config(vis_processor_cfg)
 
-        stop_words_ids = [torch.tensor([835]).to('cuda:{}'.format(gpu_id)),
-                          torch.tensor([2277, 29937]).to('cuda:{}'.format(gpu_id))]
+        stop_words_ids = [torch.tensor([835]).to(self.device),
+                          torch.tensor([2277, 29937]).to(self.device)]
         self.stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
-        self.device = 'cuda:{}'.format(gpu_id)
+
 
     @staticmethod
     def create_prompt(system, sep, messages):
