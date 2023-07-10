@@ -75,7 +75,7 @@ raw_image = Image.open(img_path).convert('RGB')
 image = vis_processor(raw_image).unsqueeze(0).to('cuda:{}'.format(args.gpu_id))
 
 # prepare the input to llama
-system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
+system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions."
 roles = ("Human", "Assistant")
 messages = []
 offset = 2
@@ -86,6 +86,7 @@ image_list = [image_emb]
 messages.append(("Human", "<Img><ImageHere></Img>"))
 messages[0] = ("Human", "<Img><ImageHere></Img> %s" % 'describe the image as detailed as possible' )
 messages.append(["Assistant", None])
+
 
 prompt = system + sep
 for role, message in messages:
