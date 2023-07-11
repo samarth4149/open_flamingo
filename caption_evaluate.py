@@ -278,7 +278,7 @@ def evaluate_captioning(
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
-                max_generation_length=max_generation_length,
+                max_generation_length=200,
                 num_beams=num_beams,
                 length_penalty=1,
             )
