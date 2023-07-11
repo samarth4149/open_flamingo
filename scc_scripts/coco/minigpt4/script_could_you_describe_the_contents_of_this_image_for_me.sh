@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N Take_a_look_at_this_image and_describe_that_you_notice.
+#$ -N Could_you_describe_the_contents_of_this_image_for_me?
 
 #$ -m bea
 
