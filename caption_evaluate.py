@@ -330,7 +330,7 @@ def evaluate_captioning(
     html_folder = 'html'
     if not os.path.isdir(html_folder):
         os.makedirs(html_folder)
-    with open(os.path.join(html_folder, 'coco_flamingo_%s'% ('_'.join(args.coco_prompts))), 'w') as f:
+    with open(os.path.join(html_folder, 'coco_%s_%s'% (args.model, '_'.join(args.coco_prompts))), 'w') as f:
         f.write(html)
 
 
