@@ -271,7 +271,9 @@ def evaluate_captioning(
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         if args.model == 'minigpt4':
-            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
+            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt, max_generation_length=max_generation_length,
+                num_beams=num_beams,
+                length_penalty=length_penalty)
         else:
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
@@ -288,8 +290,8 @@ def evaluate_captioning(
         else:
             new_predictions = outputs
 
-        # import pdb
-        # pdb.set_trace()
+        import pdb
+        pdb.set_trace()
         # Generate predictions from captions
         predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
         for b_idx, caption in enumerate(new_predictions):
