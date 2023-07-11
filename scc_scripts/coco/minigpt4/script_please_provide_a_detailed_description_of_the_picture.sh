@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N Please_provide_a_detailed_description_of_the_picture..
+#$ -N Please_provide_a_detailed_description_of_the_picture
 
 #$ -m bea
 
