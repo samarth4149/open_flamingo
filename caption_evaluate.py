@@ -280,7 +280,7 @@ def evaluate_captioning(
                 batch_text=batch_text,
                 max_generation_length=max_generation_length,
                 num_beams=num_beams,
-                length_penalty=length_penalty,
+                length_penalty=1,
             )
 
         if args.model == 'open_flamingo':
