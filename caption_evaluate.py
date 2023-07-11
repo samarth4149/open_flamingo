@@ -272,7 +272,7 @@ def evaluate_captioning(
 
         if args.model == 'minigpt4':
             outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt, max_new_tokens=max_generation_length,
-                num_beams=num_beams,
+                # num_beams=num_beams,
                 length_penalty=length_penalty)
         else:
             outputs = eval_model.get_outputs(
