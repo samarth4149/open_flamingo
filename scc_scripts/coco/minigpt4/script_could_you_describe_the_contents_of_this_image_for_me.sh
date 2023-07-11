@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N Describe_this_image_in_detail
+#$ -N Take_a_look_at_this_image and_describe_that_you_notice.
 
 #$ -m bea
 
@@ -44,4 +44,4 @@ conda activate openflamingo
 CFG_PATH='minigpt4/eval_configs/minigpt4_eval.yaml'
 DEVICE=0
 
-python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  -device $DEVICE --coco_prompts "Describe this image in detail." --model "minigpt4" --cfg-path $CFG_PATH
+python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  -device $DEVICE --coco_prompts "Could you describe the contents of this image for me?" --model "minigpt4" --cfg-path $CFG_PATH
