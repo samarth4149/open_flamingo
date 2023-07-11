@@ -288,8 +288,6 @@ def evaluate_captioning(
         else:
             new_predictions = outputs
 
-        import pdb
-        pdb.set_trace()
         # Generate predictions from captions
         predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
         for b_idx, caption in enumerate(new_predictions):
