@@ -271,14 +271,12 @@ def evaluate_captioning(
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         if args.model == 'minigpt4':
-            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt, max_new_tokens=max_generation_length,
-                # num_beams=num_beams,
-                length_penalty=length_penalty)
+            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
         else:
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
-                max_generation_length=100,
+                max_generation_length=max_generation_length,
                 num_beams=num_beams,
                 length_penalty=length_penalty,
             )
