@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N Take_a_look_at_this_image and_describe_that_you_notice
+#$ -N Take_a_look_at_this_image_and_describe_that_you_notice
 
 #$ -m bea
 
