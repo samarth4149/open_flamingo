@@ -128,6 +128,8 @@ class MiniGPT4(Blip2Base):
     def encode_img(self, image):
         device = image.device
         # with self.maybe_autocast():
+        self.visual_encoder.float()
+        self.ln_vision.float()
         image_embeds = self.ln_vision(self.visual_encoder(image)).to(device)
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(device)
 
