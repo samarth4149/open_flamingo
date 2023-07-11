@@ -90,7 +90,7 @@ parser.add_argument(
         "change to --cfg-options instead.",
     )
 
-parser.add_argument("--cfg-path", required=True, help="path to configuration file.")
+parser.add_argument("--cfg-path",  help="path to configuration file.")
 
 
 def main():
