@@ -48,7 +48,7 @@ class LLaVA():
 
     def encode_prompt(self, query):
         qs = query
-        qs = qs + '\n' + DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len + DEFAULT_IM_END_TOKEN
+        qs = qs + '\n' + DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * self.image_token_len + DEFAULT_IM_END_TOKEN
 
         # get system message
         conv = conv_templates["multimodal"].copy()
