@@ -44,49 +44,35 @@ def eval_model(args):
     model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, use_cache=True).cuda()
     image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
-    import pdb
-    pdb.set_trace()
     mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
     tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
     if mm_use_im_start_end:
         tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
 
     vision_tower = model.get_model().vision_tower[0]
-    if vision_tower.device.type == 'meta':
-        vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16, low_cpu_mem_usage=True).cuda()
-        model.get_model().vision_tower[0] = vision_tower
-    else:
-        vision_tower.to(device='cuda', dtype=torch.float16)
+    vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16, low_cpu_mem_usage=True).cuda()
+    model.get_model().vision_tower[0] = vision_tower
+
     vision_config = vision_tower.config
     vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
     vision_config.use_im_start_end = mm_use_im_start_end
-    if mm_use_im_start_end:
-        vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
+    vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
     image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
 
     qs = args.query
-    if mm_use_im_start_end:
-        qs = qs + '\n' + DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len + DEFAULT_IM_END_TOKEN
-    else:
-        qs = qs + '\n' + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len
+    qs = qs + '\n' + DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * image_token_len + DEFAULT_IM_END_TOKEN
 
-    if "v1" in model_name.lower():
-        conv_mode = "llava_v1"
-    elif "mpt" in model_name.lower():
-        conv_mode = "mpt_multimodal"
-    else:
-        conv_mode = "multimodal"
+    conv_mode = "multimodal"
+    args.conv_mode = conv_mode
 
-    if args.conv_mode is not None and conv_mode != args.conv_mode:
-        print('[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}'.format(conv_mode, args.conv_mode, args.conv_mode))
-    else:
-        args.conv_mode = conv_mode
-
-    conv = conv_templates[args.conv_mode].copy()
+    conv = conv_templates["multimodal"].copy()
     conv.append_message(conv.roles[0], qs)
     conv.append_message(conv.roles[1], None)
     prompt = conv.get_prompt()
     inputs = tokenizer([prompt])
+
+    import pdb
+    pdb.set_trace()
 
     image = load_image(args.image_file)
     image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
