@@ -21,10 +21,10 @@ DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
 DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 
-class LLaVAI():
-    def __init__(self):
-
-
+# class LLaVAI():
+#     def __init__(self):
+#
+#
 
 def load_image(image_file):
     if image_file.startswith('http') or image_file.startswith('https'):
