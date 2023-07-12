@@ -65,12 +65,12 @@ class LLaVA():
         stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
         return input_ids, stop_str, stopping_criteria
 
-    def get_outputs(self, batch_image, prompt):
+    def get_outputs(self, batch_images, prompt):
         input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
         with torch.inference_mode():
             output_ids = self.model.generate(
                 input_ids,
-                images=batch_image.half().cuda(),
+                images=batch_images.half().cuda(),
                 do_sample=True,
                 temperature=0.2,
                 max_new_tokens=1024,

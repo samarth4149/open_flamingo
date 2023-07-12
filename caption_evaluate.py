@@ -280,6 +280,8 @@ def evaluate_captioning(
 
         if args.model == 'minigpt4':
             outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
+        elif args.model == 'minigpt4':
+            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
         else:
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
