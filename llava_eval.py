@@ -68,7 +68,7 @@ class LLaVA():
         with torch.inference_mode():
             output_ids = self.model.generate(
                 input_ids,
-                images=batch_image.unsqueeze(0).half().cuda(),
+                images=batch_image.half().cuda(),
                 do_sample=True,
                 temperature=0.2,
                 max_new_tokens=1024,
