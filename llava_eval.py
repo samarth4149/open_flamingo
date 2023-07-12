@@ -21,6 +21,10 @@ DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
 DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 
+class LLaVAI():
+    def __init__(self):
+
+
 
 def load_image(image_file):
     if image_file.startswith('http') or image_file.startswith('https'):
@@ -37,12 +41,11 @@ def eval_model(args):
     model_name = os.path.expanduser(args.model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    if "mpt" in model_name.lower():
-        model = LlavaMPTForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, use_cache=True).cuda()
-    else:
-        model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, use_cache=True).cuda()
+    model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, use_cache=True).cuda()
     image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=torch.float16)
 
+    import pdb
+    pdb.set_trace()
     mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
     tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
     if mm_use_im_start_end:
