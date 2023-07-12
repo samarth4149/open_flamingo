@@ -26,7 +26,7 @@ from open_flamingo.eval.coco_metric import compute_cider, postprocess_captioning
 from tqdm import tqdm
 from minigpt4.common.config import Config
 from minigpt4.eval import MiniGPT4
-
+from llava.eval import LLaVA
 # from eval_datasets import VQADataset, ImageNetDataset
 # from open_flamingo.eval.imagenet_utils import (
 #     openai_imagenet_classnames,
@@ -90,6 +90,8 @@ parser.add_argument(
         "change to --cfg-options instead.",
     )
 
+# parser.add_argument("--model_path", type=str, help="path to model checkpoint.")
+
 parser.add_argument("--cfg-path",  help="path to configuration file.")
 
 
@@ -99,7 +101,9 @@ def main():
     model_args = {
         leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     }
-    if args.model == 'minigpt4':
+    if args.model =='llava':
+        eval_model = LLaVA(model_args['model_name'])
+    elif args.model == 'minigpt4':
         cfg = Config(args)
         eval_model = MiniGPT4(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
     else:
@@ -240,6 +244,10 @@ def evaluate_captioning(
         elif args.model == 'minigpt4':
             test_dataset = CocoDetection(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.vis_processor
+            )
+        elif args.model == 'llava':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
             )
         else:
             raise ValueError(f'model {args.model} is not supported')

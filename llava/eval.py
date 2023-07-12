@@ -8,21 +8,16 @@ from transformers import CLIPVisionModel, CLIPImageProcessor, StoppingCriteria
 from llava.model import *
 from llava.model.utils import KeywordsStoppingCriteria
 
-from PIL import Image
-
-import os
-import requests
-from PIL import Image
-from io import BytesIO
-
-
 DEFAULT_IMAGE_TOKEN = "<image>"
 DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
 DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 
+
 class LLaVA():
     def __init__(self, model_name):
+        disable_torch_init()
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         self.model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16,
@@ -87,35 +82,3 @@ class LLaVA():
             predictions.append(output)
 
         return predictions
-
-def load_image(image_file):
-    if image_file.startswith('http') or image_file.startswith('https'):
-        response = requests.get(image_file)
-        image = Image.open(BytesIO(response.content)).convert('RGB')
-    else:
-        image = Image.open(image_file).convert('RGB')
-    return image
-
-
-def eval_model(args):
-    # Model
-    disable_torch_init()
-    model = LLaVA(os.path.expanduser(args.model_name))
-    image_processor = model.image_processor
-
-
-    image = load_image(args.image_file)
-    image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
-
-    predictions = model.get_outputs(image_tensor.unsqueeze(0).half().cuda(), args.query)
-    print(predictions)
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model-name", type=str, default="facebook/opt-350m")
-    parser.add_argument("--image-file", type=str, required=True)
-    parser.add_argument("--query", type=str, required=True)
-    parser.add_argument("--conv-mode", type=str, default=None)
-    args = parser.parse_args()
-
-    eval_model(args)
