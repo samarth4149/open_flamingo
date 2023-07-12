@@ -101,7 +101,7 @@ def main():
     model_args = {
         leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     }
-    if args.model =='llava':
+    if args.model == 'llava':
         eval_model = LLaVA(model_args['model_name'])
     elif args.model == 'minigpt4':
         cfg = Config(args)
@@ -278,9 +278,7 @@ def evaluate_captioning(
         prompt = args.coco_prompts
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
-        if args.model == 'minigpt4':
-            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
-        elif args.model == 'minigpt4':
+        if args.model in ['minigpt4', 'llava']:
             outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
         else:
             outputs = eval_model.get_outputs(
