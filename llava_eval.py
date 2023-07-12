@@ -28,6 +28,8 @@ class LLaVA():
         self.model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16,
                                                       use_cache=True).cuda()
         self.image_processor = CLIPImageProcessor.from_pretrained(self.model.config.mm_vision_tower, torch_dtype=torch.float16)
+        import pdb
+        pdb.set_trace()
 
         mm_use_im_start_end = getattr(self.model.config, "mm_use_im_start_end", False)
         self.tokenizer .add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
