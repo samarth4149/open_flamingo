@@ -396,7 +396,9 @@ def evaluate_vqa(
     if dataset_name == "coco":
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
-        if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) and os.path.exists(os.path.join(args.output_dir, 'targets.npy')):
+        if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) \
+                and os.path.exists(os.path.join(args.output_dir, 'targets.npy')) \
+                and os.path.exists(os.path.join(args.output_dir, 'triplets.pickle')):
             preds = [np.load(os.path.join(args.output_dir, 'preds.npy'))]
             targets = [np.load(os.path.join(args.output_dir, 'targets.npy'))]
             with open(os.path.join(args.output_dir, 'triplets.pickle')) as f:
