@@ -445,7 +445,7 @@ def evaluate_vqa(
             else:
                 new_predictions = outputs
 
-            new_predictions = [pred[:3].lower for pred in new_predictions]
+            new_predictions = [pred[:3].lower() for pred in new_predictions]
             for b_idx, pred in enumerate(new_predictions):
                 if 'yes' in pred:
                     predictions[b_idx, c_idx] = 1
