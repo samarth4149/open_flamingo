@@ -44,7 +44,7 @@ from open_flamingo.eval.ok_vqa_utils import postprocess_ok_vqa_generation
 from open_flamingo.src.flamingo import Flamingo
 
 from datasets.coco_detection import CocoDetection
-
+import pickle
 # from vqa_metric import compute_vqa_accuracy, postprocess_vqa_generation
 
 parser = argparse.ArgumentParser()
@@ -399,8 +399,8 @@ def evaluate_vqa(
         if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) and os.path.exists(os.path.join(args.output_dir, 'targets.npy')):
             preds = [np.load(os.path.join(args.output_dir, 'preds.npy'))]
             targets = [np.load(os.path.join(args.output_dir, 'targets.npy'))]
-            with open(os.path.join(args.output_dir, 'triplets.json')) as f:
-                triplets = json.load(f)
+            with open(os.path.join(args.output_dir, 'triplets.pickle')) as f:
+                triplets = pickle.load(f)
             assert len(preds[0]) == len(targets[0]) and len(preds[0]) == len(triplets)
             start_idx = len(preds[0])
         else:
@@ -503,8 +503,8 @@ def evaluate_vqa(
             targets = np.concatenate(targets, axis=0)
             np.save(os.path.join(args.output_dir, 'preds.npy'), preds)
             np.save(os.path.join(args.output_dir, 'targets.npy'), targets)
-            with open(os.path.join(args.output_dir, 'triplets.json'), 'w+') as f:
-                json.dump(triplets, f)
+            with open(os.path.join(args.output_dir, 'triplets.pickle'), 'w+') as f:
+                pickle.dump(triplets, f)
             preds = [preds]
             targets = [targets]
 
