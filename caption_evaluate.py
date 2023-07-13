@@ -408,6 +408,7 @@ def evaluate_vqa(
             targets = []
             triplets = []
         # build test dataset
+        print(start_idx)
         if args.model == 'open_flamingo':
             test_dataset = CocoDetection(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor, start_idx=start_idx
