@@ -394,11 +394,11 @@ def evaluate_vqa(
 
     """
     if dataset_name == "coco":
-        if not os.path.join(args.output_dir):
+        if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
         if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) and os.path.exists(os.path.join(args.output_dir, 'targets.npy')):
-            preds = [np.load(args.output_dir, 'preds.npy')]
-            targets = [np.load(args.output_dir, 'targets.npy')]
+            preds = [np.load(os.path.join(args.output_dir, 'preds.npy'))]
+            targets = [np.load(os.path.join(args.output_dir, 'targets.npy'))]
             with open(os.path.join(args.output_dir, 'triplets.json')) as f:
                 triplets = json.load(f)
             assert len(preds[0]) == len(targets[0]) and len(preds[0]) == len(triplets)
