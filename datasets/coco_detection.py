@@ -11,7 +11,7 @@ from minigpt4.processors.blip_processors import Blip2ImageEvalProcessor
 from transformers import CLIPImageProcessor
 
 class CocoDetection(datasets.coco.CocoDetection):
-    def __init__(self, root, data_split, transform):
+    def __init__(self, root, data_split, transform, start_idx=0):
         # super(CocoDetection, self).__init__()
         self.classnames = ["person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
                            "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
@@ -31,7 +31,7 @@ class CocoDetection(datasets.coco.CocoDetection):
         cls_id.sort()
         self.coco = COCO(annFile)
         self.data_split = data_split
-        self.ids = list(self.coco.imgToAnns.keys())
+        self.ids = list(self.coco.imgToAnns.keys())[start_idx:]
 
         # train_transform = transforms.Compose([
         #     # transforms.RandomResizedCrop(img_size)

@@ -98,6 +98,21 @@ parser.add_argument(
 
 # parser.add_argument("--model_path", type=str, help="path to model checkpoint.")
 
+parser.add_argument(
+        "--output_dir",
+        type=str,
+        help="the output directory path",
+    )
+
+parser.add_argument(
+        "--save_freq",
+        type=int,
+        default=10,
+        help="the output directory path",
+    )
+
+
+
 parser.add_argument("--cfg-path",  help="path to configuration file.")
 
 
@@ -361,6 +376,7 @@ def evaluate_vqa(
     num_beams: int = 3,
     length_penalty: float = -2.0,
     dataset_name: str = "coco",
+    start_idx: int = 0
 ):
     """Evaluate a model on COCO dataset.
 
@@ -378,22 +394,33 @@ def evaluate_vqa(
 
     """
     if dataset_name == "coco":
+        if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) and os.path.exists(os.path.join(args.output_dir, 'targets.npy')):
+            preds = [np.load(args.output_dir, 'preds.npy')]
+            targets = [np.load(args.output_dir, 'targets.npy')]
+            with open(os.path.join(args.output_dir, 'triplets.json')) as f:
+                triplets = json.load(f)
+            assert len(preds[0]) == len(targets[0]) and len(preds[0]) == len(triplets)
+            start_idx = len(preds[0])
+        else:
+            preds = []
+            targets = []
+            triplets = []
         # build test dataset
         if args.model == 'open_flamingo':
             test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor, start_idx=start_idx
             )
         elif args.model == 'blip':
             test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.processor.image_processor
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.processor.image_processor, start_idx=start_idx
             )
         elif args.model == 'minigpt4':
             test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.vis_processor
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.vis_processor, start_idx=start_idx
             )
         elif args.model == 'llava':
             test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor, start_idx=start_idx
             )
         else:
             raise ValueError(f'model {args.model} is not supported')
@@ -411,9 +438,10 @@ def evaluate_vqa(
 
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
-    targets = []
-    preds = []
-    triplets = []
+    # targets = []
+    # preds = []
+    # triplets = []
+    count = 0
     for batch in tqdm(iter(test_dataloader)):
         batch_images, batch_target, batch_path = batch
         batch_target = batch_target.max(dim=1)[0]
@@ -449,7 +477,7 @@ def evaluate_vqa(
                     predictions[b_idx, c_idx] = 1
 
         # compute mAP with the ground truth label
-        targets.append(batch_target)
+        targets.append(batch_target.cpu().numpy())
         preds.append(predictions)
 
         # generate triplets for visualization
@@ -466,6 +494,16 @@ def evaluate_vqa(
             triplet = (image_path, pred_classes, gt_classes)
             triplets.append(triplet)
 
+        count += 1
+        if count % args.save_freq == 0:
+            preds = np.concatenate(preds, axis=0)
+            targets = np.concatenate(targets, axis=0)
+            np.save(os.path.join(args.output_dir, 'preds.npy'))
+            np.save(os.path.join(args.output_dir, 'targets.npy'))
+            with open(os.path.join(args.output_dir, 'triplets.json'), 'w+') as f:
+                json.dump(triplets, f)
+            preds = [preds]
+            targets = [targets]
 
     # compute mAP with the ground truth label
     preds = np.concatenate(preds, axis=0)
