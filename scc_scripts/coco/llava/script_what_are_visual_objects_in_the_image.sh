@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N Could_you_describe_the_contents_of_this_image_for_me
+#$ -N what_are_visual_objects_in_the_image
 
 #$ -m bea
 
