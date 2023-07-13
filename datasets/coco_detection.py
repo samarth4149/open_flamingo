@@ -86,7 +86,9 @@ class CocoDetection(datasets.coco.CocoDetection):
         path = coco.loadImgs(img_id)[0]['file_name']
         img = Image.open(os.path.join(self.root, self.data_split, path)).convert('RGB')
         if self.transform is not None:
-            if isinstance(self.transform, transforms.Compose) or isinstance(self.transform, Blip2ImageEvalProcessor) or isinstance(self.transform, CLIPImageProcessor):
+            if isinstance(self.transform, CLIPImageProcessor):
+                img = self.transform.preprocess(img, return_tensors='pt')['pixel_values'][0]
+            elif isinstance(self.transform, transforms.Compose) or isinstance(self.transform, Blip2ImageEvalProcessor):
                 img = self.transform(img)
             else:
                 img = self.transform(img, return_tensors="pt")[
