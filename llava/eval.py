@@ -60,7 +60,7 @@ class LLaVA():
 
     def get_outputs(self, batch_images, prompt):
         input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
-
+        input_ids = input_ids.tile(batch_images, 1)
         with torch.inference_mode():
             output_ids = self.model.generate(
                 input_ids,
