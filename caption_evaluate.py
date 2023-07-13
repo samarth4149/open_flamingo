@@ -501,8 +501,8 @@ def evaluate_vqa(
         if count % args.save_freq == 0:
             preds = np.concatenate(preds, axis=0)
             targets = np.concatenate(targets, axis=0)
-            np.save(os.path.join(args.output_dir, 'preds.npy'))
-            np.save(os.path.join(args.output_dir, 'targets.npy'))
+            np.save(os.path.join(args.output_dir, 'preds.npy'), preds)
+            np.save(os.path.join(args.output_dir, 'targets.npy'), targets)
             with open(os.path.join(args.output_dir, 'triplets.json'), 'w+') as f:
                 json.dump(triplets, f)
             preds = [preds]
