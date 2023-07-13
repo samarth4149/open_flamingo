@@ -401,7 +401,7 @@ def evaluate_vqa(
                 and os.path.exists(os.path.join(args.output_dir, 'triplets.pickle')):
             preds = [np.load(os.path.join(args.output_dir, 'preds.npy'))]
             targets = [np.load(os.path.join(args.output_dir, 'targets.npy'))]
-            with open(os.path.join(args.output_dir, 'triplets.pickle')) as f:
+            with open(os.path.join(args.output_dir, 'triplets.pickle'), 'rb') as f:
                 triplets = pickle.load(f)
             assert len(preds[0]) == len(targets[0]) and len(preds[0]) == len(triplets)
             start_idx = len(preds[0])
@@ -505,7 +505,7 @@ def evaluate_vqa(
             targets = np.concatenate(targets, axis=0)
             np.save(os.path.join(args.output_dir, 'preds.npy'), preds)
             np.save(os.path.join(args.output_dir, 'targets.npy'), targets)
-            with open(os.path.join(args.output_dir, 'triplets.pickle'), 'w+') as f:
+            with open(os.path.join(args.output_dir, 'triplets.pickle'), 'wb+') as f:
                 pickle.dump(triplets, f)
             preds = [preds]
             targets = [targets]
