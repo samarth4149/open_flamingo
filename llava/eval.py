@@ -59,6 +59,8 @@ class LLaVA():
         return input_ids, stop_str, stopping_criteria
 
     def get_outputs(self, batch_images, prompt):
+        import pdb
+        pdb.set_trace()
         input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
         input_ids = input_ids.tile((batch_images.shape[0], 1))
         with torch.inference_mode():
@@ -74,8 +76,6 @@ class LLaVA():
         if n_diff_input_output > 0:
             print(f'[Warning] {n_diff_input_output} output_ids are not the same as the input_ids')
         outputs = self.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)
-        import pdb
-        pdb.set_trace()
         predictions = []
         for output in outputs:
             output = output.strip()
