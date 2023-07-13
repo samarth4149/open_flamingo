@@ -343,162 +343,136 @@ def evaluate_captioning(
 
 
 
-
 def evaluate_vqa(
     args: argparse.Namespace,
     eval_model: BaseEvalModel,
-    seed: int = 42,
-    max_generation_length: int = 5,
+    max_generation_length: int = 20,
     num_beams: int = 3,
     length_penalty: float = -2.0,
-    num_shots: int = 8,
-    dataset_name: str = "vqav2",
+    dataset_name: str = "coco",
 ):
-    """
-    Evaluate a model on VQA datasets. Currently supports VQA v2.0, OK-VQA, VizWiz and TextVQA.
+    """Evaluate a model on COCO dataset.
 
     Args:
         args (argparse.Namespace): arguments
         eval_model (BaseEvalModel): model to evaluate
-        seed (int, optional): random seed. Defaults to 42.
-        max_generation_length (int, optional): max generation length. Defaults to 5.
+        seed (int, optional): seed for random number generator. Defaults to 42.
+        max_generation_length (int, optional): maximum length of the generated caption. Defaults to 20.
         num_beams (int, optional): number of beams to use for beam search. Defaults to 3.
         length_penalty (float, optional): length penalty for beam search. Defaults to -2.0.
-        num_shots (int, optional): number of shots to use. Defaults to 8.
-        dataset_name (string): type of vqa dataset: currently supports vqav2, ok_vqa. Defaults to vqav2.
+        num_shots (int, optional): number of in-context samples to use. Defaults to 8.
+        dataset_name (str, optional): dataset to evaluate on. Can be "coco" or "flickr". Defaults to "coco".
     Returns:
-        float: accuracy score
+        float: CIDEr score
+
     """
-
-    if dataset_name == "ok_vqa":
-        train_image_dir_path = args.ok_vqa_train_image_dir_path
-        train_questions_json_path = args.ok_vqa_train_questions_json_path
-        train_annotations_json_path = args.ok_vqa_train_annotations_json_path
-        test_image_dir_path = args.ok_vqa_test_image_dir_path
-        test_questions_json_path = args.ok_vqa_test_questions_json_path
-        test_annotations_json_path = args.ok_vqa_test_annotations_json_path
-    elif dataset_name == "vqav2":
-        train_image_dir_path = args.vqav2_train_image_dir_path
-        train_questions_json_path = args.vqav2_train_questions_json_path
-        train_annotations_json_path = args.vqav2_train_annotations_json_path
-        test_image_dir_path = args.vqav2_test_image_dir_path
-        test_questions_json_path = args.vqav2_test_questions_json_path
-        test_annotations_json_path = args.vqav2_test_annotations_json_path
-    elif dataset_name == "vizwiz":
-        train_image_dir_path = args.vizwiz_train_image_dir_path
-        train_questions_json_path = args.vizwiz_train_questions_json_path
-        train_annotations_json_path = args.vizwiz_train_annotations_json_path
-        test_image_dir_path = args.vizwiz_test_image_dir_path
-        test_questions_json_path = args.vizwiz_test_questions_json_path
-        test_annotations_json_path = args.vizwiz_test_annotations_json_path
-    elif dataset_name == "textvqa":
-        train_image_dir_path = args.textvqa_image_dir_path
-        train_questions_json_path = args.textvqa_train_questions_json_path
-        train_annotations_json_path = args.textvqa_train_annotations_json_path
-        test_image_dir_path = args.textvqa_image_dir_path
-        test_questions_json_path = args.textvqa_test_questions_json_path
-        test_annotations_json_path = args.textvqa_test_annotations_json_path
+    if dataset_name == "coco":
+        # build test dataset
+        if args.model == 'open_flamingo':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
+            )
+        elif args.model == 'blip':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.processor.image_processor
+            )
+        elif args.model == 'minigpt4':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.vis_processor
+            )
+        elif args.model == 'llava':
+            test_dataset = CocoDetection(
+                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
+            )
+        else:
+            raise ValueError(f'model {args.model} is not supported')
+        class_synonyms = []
+        class_names = test_dataset.classnames
+        class_names_np = np.array(class_names)
+        for class_name in class_names:
+            synonyms = [class_name]
+            for syn in wordnet.synsets(class_name):
+                for l in syn.lemmas():
+                    synonyms.append(l.name())
+            class_synonyms.append(synonyms)
     else:
-        raise ValueError(f"Unsupported dataset: {dataset_name}")
+        raise ValueError('Dataset %s is not supported' % dataset_name)
 
-    train_dataset = VQADataset(
-        image_dir_path=train_image_dir_path,
-        question_path=train_questions_json_path,
-        annotations_path=train_annotations_json_path,
-        is_train=True,
-        dataset_name=dataset_name,
-    )
+    test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
-    test_dataset = VQADataset(
-        image_dir_path=test_image_dir_path,
-        question_path=test_questions_json_path,
-        annotations_path=test_annotations_json_path,
-        is_train=False,
-        dataset_name=dataset_name,
-    )
+    targets = []
+    preds = []
+    triplets = []
+    for batch in tqdm(iter(test_dataloader)):
+        batch_images, batch_target, batch_path = batch
+        batch_target = batch_target.max(dim=1)[0]
 
-    effective_num_shots = compute_effective_num_shots(num_shots, args.model)
+        if args.model == 'open_flamingo':
+            batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
-    test_dataset = prepare_eval_samples(
-        test_dataset,
-        args.num_samples if args.num_samples > 0 else len(test_dataset),
-        seed,
-    )
-
-    in_context_samples = get_query_set(train_dataset, args.query_set_size, seed)
-    predictions = []
-
-    for batch in more_itertools.chunked(
-        tqdm(test_dataset, desc=f"Running inference {dataset_name.upper()}"),
-        args.batch_size,
-    ):
-        batch_demo_samples = sample_batch_demos_from_query_set(
-            in_context_samples, effective_num_shots, len(batch)
-        )
-
-        batch_images = []
-        batch_text = []
-        for i in range(len(batch)):
-            if num_shots > 0:
-                context_images = [x["image"] for x in batch_demo_samples[i]]
+        predictions = np.zeros((len(batch_images), len(class_names)), dtype=np.int32)
+        for c_idx, class_name in enumerate(class_names):
+            prompt = f'is there a {class_name} in the image?'
+            if args.model in ['minigpt4', 'llava']:
+                outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
             else:
-                context_images = []
-            batch_images.append(context_images + [batch[i]["image"]])
+                batch_text = [f"<image>{prompt} "] * len(batch_images)
+                outputs = eval_model.get_outputs(
+                    batch_images=batch_images,
+                    batch_text=batch_text,
+                    max_generation_length=max_generation_length,
+                    num_beams=num_beams,
+                    length_penalty=length_penalty,
+                )
 
-            context_text = "".join(
-                [
-                    eval_model.get_vqa_prompt(
-                        question=x["question"], answer=x["answers"][0]
-                    )
-                    for x in batch_demo_samples[i]
+            if args.model == 'open_flamingo':
+                new_predictions = [
+                    postprocess_captioning_generation(out, split_words=['.', '\n', prompt, prompt.capitalize()]).replace('"', "") for out in outputs
                 ]
-            )
+            else:
+                new_predictions = outputs
 
-            # Keep the text but remove the image tags for the zero-shot case
-            if num_shots == 0:
-                context_text = context_text.replace("<image>", "")
+            new_predictions = [pred[:3].lower for pred in new_predictions]
+            for b_idx, pred in enumerate(new_predictions):
+                if 'yes' in pred:
+                    predictions[b_idx, c_idx] = 1
 
-            batch_text.append(
-                context_text + eval_model.get_vqa_prompt(question=batch[i]["question"])
-            )
+        # compute mAP with the ground truth label
+        targets.append(batch_target)
+        preds.append(predictions)
 
-        outputs = eval_model.get_outputs(
-            batch_images=batch_images,
-            batch_text=batch_text,
-            max_generation_length=max_generation_length,
-            num_beams=num_beams,
-            length_penalty=length_penalty,
-        )
+        # generate triplets for visualization
+        # # Example usage:
+        visual_path = '/Users/sunxm/Documents/research/datasets/mscoco_2014/val2014'
+        for path, prediction, target in zip(batch_path, predictions, batch_target):
+            # image_path
+            image_path = os.path.join(visual_path, path)
+            # predict list
+            pred_classes = class_names_np[prediction == 1]
+            # ground-truth label list
+            target_np = target.cpu().numpy()
+            gt_classes = class_names_np[target_np == 1]
+            triplet = (image_path, pred_classes, gt_classes)
+            triplets.append(triplet)
 
-        process_function = (
-            postprocess_ok_vqa_generation
-            if dataset_name == "ok_vqa"
-            else postprocess_vqa_generation
-        )
 
-        new_predictions = map(process_function, outputs)
+    # compute mAP with the ground truth label
+    preds = np.concatenate(preds, axis=0)
+    targets = torch.cat(targets, dim=0)
+    mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds)
+    print('mAP is %0.2f' % mAP)
 
-        predictions.extend(
-            [
-                {"answer": p, "question_id": sample["question_id"]}
-                for p, sample in zip(new_predictions, batch)
-            ]
-        )
-    # save the predictions to a temporary file
-    random_uuid = str(uuid.uuid4())
-    with open(f"{dataset_name}results_{random_uuid}.json", "w") as f:
-        f.write(json.dumps(predictions, indent=4))
+    # visualize the prediction
+    html = create_html_page(triplets)
 
-    acc = compute_vqa_accuracy(
-        f"{dataset_name}results_{random_uuid}.json",
-        test_questions_json_path,
-        test_annotations_json_path,
-    )
+    # write the html string to a file
+    html_folder = 'html'
+    if not os.path.isdir(html_folder):
+        os.makedirs(html_folder)
+    with open(os.path.join(html_folder, 'coco_vqa_%s_%s'% (args.model, '_'.join(args.coco_prompts))), 'w') as f:
+        f.write(html)
 
-    # delete the temporary file
-    os.remove(f"{dataset_name}results_{random_uuid}.json")
 
-    return acc
 
 if __name__ == "__main__":
     main()
