@@ -83,6 +83,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--vqa",
+    action='store_true',
+    help="specify if evaluating in vqa form",
+)
+
+parser.add_argument(
         "--options",
         nargs="+",
         help="override some settings in the used config, the key-value pair "
@@ -113,11 +119,18 @@ def main():
     if args.eval_coco:
         print("Evaluating on COCO...")
         scores = []
-        map_score = evaluate_captioning(
-            args,
-            eval_model=eval_model,
-            dataset_name="coco",
-        )
+        if args.vqa:
+            map_score = evaluate_vqa(
+                args,
+                eval_model=eval_model,
+                dataset_name="coco",
+            )
+        else:
+            map_score = evaluate_captioning(
+                args,
+                eval_model=eval_model,
+                dataset_name="coco",
+            )
 
 
 
