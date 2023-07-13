@@ -59,8 +59,6 @@ class LLaVA():
         return input_ids, stop_str, stopping_criteria
 
     def get_outputs(self, batch_images, prompt):
-        import pdb
-        pdb.set_trace()
         input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
         input_ids = input_ids.tile((batch_images.shape[0], 1))
         with torch.inference_mode():
