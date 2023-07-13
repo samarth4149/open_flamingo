@@ -449,8 +449,6 @@ def evaluate_vqa(
             for b_idx, pred in enumerate(new_predictions):
                 if 'yes' in pred:
                     predictions[b_idx, c_idx] = 1
-            import pdb
-            pdb.set_trace()
 
         # compute mAP with the ground truth label
         targets.append(batch_target)
