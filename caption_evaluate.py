@@ -394,6 +394,8 @@ def evaluate_vqa(
 
     """
     if dataset_name == "coco":
+        if not os.path.join(args.output_dir):
+            os.makedirs(args.output_dir)
         if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) and os.path.exists(os.path.join(args.output_dir, 'targets.npy')):
             preds = [np.load(args.output_dir, 'preds.npy')]
             targets = [np.load(args.output_dir, 'targets.npy')]
