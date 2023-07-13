@@ -74,6 +74,8 @@ class LLaVA():
         if n_diff_input_output > 0:
             print(f'[Warning] {n_diff_input_output} output_ids are not the same as the input_ids')
         outputs = self.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)
+        import pdb
+        pdb.set_trace()
         predictions = []
         for output in outputs:
             output = output.strip()
