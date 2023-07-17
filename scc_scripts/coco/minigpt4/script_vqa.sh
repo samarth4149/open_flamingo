@@ -41,8 +41,8 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
-PROCESSOR_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco"
+CFG_PATH='minigpt4/eval_configs/minigpt4_eval.yaml'
 DEVICE=0
 
-python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  --processor_path $PROCESSOR_PATH --device $DEVICE --vqa --model "blip" --lm_path $LM_PATH --output_dir snapshots/blip_coco_vqa --save_freq 10
+
+python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  --processor_path $PROCESSOR_PATH --device $DEVICE --vqa --model "minigpt4"  --output_dir snapshots/minigpt4-val --save_freq 10  --cfg-path $CFG_PATH
