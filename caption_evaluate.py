@@ -512,7 +512,7 @@ def evaluate_vqa(
 
     # compute mAP with the ground truth label
     preds = np.concatenate(preds, axis=0)
-    targets = torch.cat(targets, dim=0)
+    targets = np.concatenate(targets, dim=0)
     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds)
     print('mAP is %0.2f' % mAP)
 
