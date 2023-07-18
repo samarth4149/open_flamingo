@@ -456,7 +456,7 @@ def evaluate_vqa(
 
         predictions = np.zeros((len(batch_images), len(class_names)), dtype=np.int32)
         for c_idx, class_name in enumerate(class_names):
-            prompt = f'is there a {class_name} in the image? Please just answer Yes, No or Not Sure.'
+            prompt = f'is there a {class_name} in the image?'
             if args.model in ['minigpt4', 'llava']:
                 outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
             else:
