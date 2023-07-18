@@ -476,8 +476,6 @@ def evaluate_vqa(
             else:
                 new_predictions = outputs
 
-            import pdb
-            pdb.set_trace()
             new_predictions = [pred[:3].lower() for pred in new_predictions]
             for b_idx, pred in enumerate(new_predictions):
                 if 'yes' in pred:
