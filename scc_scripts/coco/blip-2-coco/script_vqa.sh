@@ -41,7 +41,7 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
+LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco"
 PROCESSOR_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco"
 DEVICE=0
 
