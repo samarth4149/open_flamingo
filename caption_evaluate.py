@@ -259,8 +259,6 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
-    import pdb
-    pdb.set_trace()
     if dataset_name == "coco":
         # build test dataset
         if args.model == 'open_flamingo':
