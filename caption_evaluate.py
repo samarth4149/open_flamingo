@@ -228,20 +228,24 @@ def evaluate_captioning(
     """
     if dataset_name in ["coco", "pascal_voc"]:
         # build test dataset
+        if dataset_name == 'coco':
+            dataset_func = CocoDetection
+        else:
+            dataset_func = voc2007
         if args.model == 'open_flamingo':
-            test_dataset = CocoDetection(
+            test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
             )
         elif args.model == 'blip':
-            test_dataset = CocoDetection(
+            test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.processor.image_processor
             )
         elif args.model == 'minigpt4':
-            test_dataset = CocoDetection(
+            test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.vis_processor
             )
         elif args.model == 'llava':
-            test_dataset = CocoDetection(
+            test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor
             )
         else:
