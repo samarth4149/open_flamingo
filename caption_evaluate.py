@@ -226,7 +226,7 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
-    if dataset_name in ["coco", "pascal"]:
+    if dataset_name in ["coco", "pascal_voc"]:
         # build test dataset
         if args.model == 'open_flamingo':
             test_dataset = CocoDetection(
