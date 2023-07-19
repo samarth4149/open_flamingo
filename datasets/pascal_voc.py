@@ -23,17 +23,14 @@ def read_labels(path_labels):
 
 
 class voc2007(data.Dataset):
-    def __init__(self, root, data_split, transform, start_idx=0, annFile=""):
+    def __init__(self, root, data_split, transform, start_idx=0):
         # data_split = train / val
         self.root = root
         self.classnames = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
                            'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa',
                            'train', 'tvmonitor']
 
-        if annFile == "":
-            self.annFile = os.path.join(self.root, 'Annotations')
-        else:
-            raise NotImplementedError
+        self.annFile = os.path.join(self.root, 'Annotations')
 
         image_list_file = os.path.join(self.root, 'ImageSets', 'Main', '%s.txt' % data_split)
 

@@ -3,49 +3,26 @@ sys.path.insert(0, './')
 
 import argparse
 import importlib
-import json
 import os
 import random
-import uuid
-from collections import defaultdict
 
-from einops import repeat
-import more_itertools
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-import sng_parser
-from wordhoard import Synonyms
 from sklearn.metrics import average_precision_score
 
-import nltk
 from nltk.corpus import wordnet
-#
-from open_flamingo.eval.coco_metric import compute_cider, postprocess_captioning_generation
-# from eval_datasets import CaptionDataset, VQADataset, ImageNetDataset, ImageDataset
+from open_flamingo.eval.coco_metric import postprocess_captioning_generation
 from tqdm import tqdm
 from minigpt4.common.config import Config
 from minigpt4.eval import MiniGPT4
 from llava.eval import LLaVA
-# from eval_datasets import VQADataset, ImageNetDataset
-# from open_flamingo.eval.imagenet_utils import (
-#     openai_imagenet_classnames,
-#     IMAGENET_1K_CLASS_ID_TO_LABEL,
-# )
-#
-# from open_flamingo.eval.elevater_utils import (
-#     class_map_cls_id_to_class,
-#     class_map,
-# )
-#
+
 from open_flamingo.eval.eval_model import BaseEvalModel
 
-from open_flamingo.eval.ok_vqa_utils import postprocess_ok_vqa_generation
-from open_flamingo.src.flamingo import Flamingo
-
 from datasets.coco_detection import CocoDetection
+from datasets.pascal_voc import voc2007
 import pickle
-# from vqa_metric import compute_vqa_accuracy, postprocess_vqa_generation
 
 parser = argparse.ArgumentParser()
 
@@ -60,6 +37,10 @@ parser.add_argument(
 )
 
 # Dataset arguments
+parser.add_argument(
+    "--dataset_name", type=str, default='coco', help="the name of the dataset to evaluate",
+)
+
 
 ## COCO Dataset
 parser.add_argument(
@@ -111,8 +92,6 @@ parser.add_argument(
         help="the output directory path",
     )
 
-
-
 parser.add_argument("--cfg-path",  help="path to configuration file.")
 
 
@@ -131,23 +110,11 @@ def main():
         module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
         eval_model = module.EvalModel(model_args)
 
-    if args.eval_coco:
-        print("Evaluating on COCO...")
-        scores = []
-        if args.vqa:
-            map_score = evaluate_vqa(
-                args,
-                eval_model=eval_model,
-                dataset_name="coco",
-            )
-        else:
-            map_score = evaluate_captioning(
-                args,
-                eval_model=eval_model,
-                dataset_name="coco",
-            )
+    if args.vqa:
+        evaluate_vqa(args, eval_model=eval_model, dataset_name=args.dataset_name)
 
-
+    else:
+        evaluate_captioning(args, eval_model=eval_model, dataset_name=args.dataset_name)
 
 def get_random_indices(num_samples, query_set_size, full_dataset, seed):
     if num_samples + query_set_size > len(full_dataset):
@@ -259,7 +226,7 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
-    if dataset_name == "coco":
+    if dataset_name in ["coco", "pascal"]:
         # build test dataset
         if args.model == 'open_flamingo':
             test_dataset = CocoDetection(
@@ -279,18 +246,18 @@ def evaluate_captioning(
             )
         else:
             raise ValueError(f'model {args.model} is not supported')
-        class_synonyms = []
-        class_names = test_dataset.classnames
-        class_names_np = np.array(class_names)
-        for class_name in class_names:
-            synonyms = [class_name]
-            for syn in wordnet.synsets(class_name):
-                for l in syn.lemmas():
-                    synonyms.append(l.name())
-            class_synonyms.append(synonyms)
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
+    class_synonyms = []
+    class_names = test_dataset.classnames
+    class_names_np = np.array(class_names)
+    for class_name in class_names:
+        synonyms = [class_name]
+        for syn in wordnet.synsets(class_name):
+            for l in syn.lemmas():
+                synonyms.append(l.name())
+        class_synonyms.append(synonyms)
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
     targets = []
@@ -364,7 +331,7 @@ def evaluate_captioning(
     html_folder = 'html'
     if not os.path.isdir(html_folder):
         os.makedirs(html_folder)
-    with open(os.path.join(html_folder, 'coco_%s_%s'% (args.model, '_'.join(args.coco_prompts))), 'w') as f:
+    with open(os.path.join(html_folder, '%s_%s_%s'% (dataset_name, args.model, '_'.join(args.coco_prompts))), 'w') as f:
         f.write(html)
 
 
@@ -393,24 +360,24 @@ def evaluate_vqa(
         float: CIDEr score
 
     """
-    if dataset_name == "coco":
-        if not os.path.exists(args.output_dir):
-            os.makedirs(args.output_dir)
-        if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) \
-                and os.path.exists(os.path.join(args.output_dir, 'targets.npy')) \
-                and os.path.exists(os.path.join(args.output_dir, 'triplets.pickle')):
-            preds = [np.load(os.path.join(args.output_dir, 'preds.npy'))]
-            targets = [np.load(os.path.join(args.output_dir, 'targets.npy'))]
-            with open(os.path.join(args.output_dir, 'triplets.pickle'), 'rb') as f:
-                triplets = pickle.load(f)
-            assert len(preds[0]) == len(targets[0]) and len(preds[0]) == len(triplets)
-            start_idx = len(preds[0])
-        else:
-            preds = []
-            targets = []
-            triplets = []
-        # build test dataset
-        print(start_idx)
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    if os.path.exists(os.path.join(args.output_dir, 'preds.npy')) \
+            and os.path.exists(os.path.join(args.output_dir, 'targets.npy')) \
+            and os.path.exists(os.path.join(args.output_dir, 'triplets.pickle')):
+        preds = [np.load(os.path.join(args.output_dir, 'preds.npy'))]
+        targets = [np.load(os.path.join(args.output_dir, 'targets.npy'))]
+        with open(os.path.join(args.output_dir, 'triplets.pickle'), 'rb') as f:
+            triplets = pickle.load(f)
+        assert len(preds[0]) == len(targets[0]) and len(preds[0]) == len(triplets)
+        start_idx = len(preds[0])
+    else:
+        preds = []
+        targets = []
+        triplets = []
+    # build test dataset
+    print(start_idx)
+    if dataset_name in ["coco", "pascal_voc"]:
         if args.model == 'open_flamingo':
             test_dataset = CocoDetection(
                 root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor, start_idx=start_idx
@@ -429,23 +396,21 @@ def evaluate_vqa(
             )
         else:
             raise ValueError(f'model {args.model} is not supported')
-        class_synonyms = []
-        class_names = test_dataset.classnames
-        class_names_np = np.array(class_names)
-        for class_name in class_names:
-            synonyms = [class_name]
-            for syn in wordnet.synsets(class_name):
-                for l in syn.lemmas():
-                    synonyms.append(l.name())
-            class_synonyms.append(synonyms)
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
+    class_synonyms = []
+    class_names = test_dataset.classnames
+    class_names_np = np.array(class_names)
+    for class_name in class_names:
+        synonyms = [class_name]
+        for syn in wordnet.synsets(class_name):
+            for l in syn.lemmas():
+                synonyms.append(l.name())
+        class_synonyms.append(synonyms)
+
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
-    # targets = []
-    # preds = []
-    # triplets = []
     count = 0
     for batch in tqdm(iter(test_dataloader)):
         batch_images, batch_target, batch_path = batch
@@ -523,7 +488,7 @@ def evaluate_vqa(
     html_folder = 'html'
     if not os.path.isdir(html_folder):
         os.makedirs(html_folder)
-    with open(os.path.join(html_folder, 'coco_vqa_%s_%s'% (args.model, '_'.join(args.coco_prompts))), 'w') as f:
+    with open(os.path.join(html_folder, '%s_vqa_%s_%s'% (dataset_name, args.model, '_'.join(args.coco_prompts))), 'w') as f:
         f.write(html)
 
 
