@@ -297,8 +297,6 @@ def evaluate_captioning(
         else:
             new_predictions = outputs
 
-        import pdb
-        pdb.set_trace()
         # Generate predictions from captions
         predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
         for b_idx, caption in enumerate(new_predictions):
@@ -455,6 +453,9 @@ def evaluate_vqa(
                 ]
             else:
                 new_predictions = outputs
+
+            import pdb
+            pdb.set_trace()
 
             new_predictions = [pred[:3].lower() for pred in new_predictions]
             for b_idx, pred in enumerate(new_predictions):
