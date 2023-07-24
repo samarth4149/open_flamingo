@@ -45,4 +45,4 @@ LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco"
 PROCESSOR_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco"
 DEVICE=0
 
-python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/VOCdevkit/VOC2007/  --processor_path $PROCESSOR_PATH --device $DEVICE --vqa --model "blip" --lm_path $LM_PATH --output_dir snapshots/blip_coco_vqa --save_freq 10  --dataset_name pascal_voc
+python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/VOCdevkit/VOC2007/  --processor_path $PROCESSOR_PATH --device $DEVICE --vqa --model "blip" --lm_path $LM_PATH --output_dir snapshots/pascal_voc/blip_coco_vqa --save_freq 10  --dataset_name pascal_voc
