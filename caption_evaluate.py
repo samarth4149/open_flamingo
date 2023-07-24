@@ -393,19 +393,19 @@ def evaluate_vqa(
             data_split = 'val'
         if args.model == 'open_flamingo':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor, start_idx=start_idx
             )
         elif args.model == 'blip':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor, start_idx=start_idx
             )
         elif args.model == 'minigpt4':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor, start_idx=start_idx
             )
         elif args.model == 'llava':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor, start_idx=start_idx
             )
         else:
             raise ValueError(f'model {args.model} is not supported')
