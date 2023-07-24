@@ -41,4 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Clarify the contents of the displayed image with great detail " --eval_coco --coco_dataroot ../../datasets/mscoco_2014/ --batch_size 16   --dataset_name pascal_voc
+python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Clarify the contents of the displayed image with great detail " --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/VOCdevkit/VOC2007/ --batch_size 16   --dataset_name pascal_voc
