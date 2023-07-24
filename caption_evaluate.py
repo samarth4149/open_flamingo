@@ -385,21 +385,28 @@ def evaluate_vqa(
     # build test dataset
     print(start_idx)
     if dataset_name in ["coco", "pascal_voc"]:
+        # build test dataset
+        if dataset_name == 'coco':
+            dataset_func = CocoDetection
+            data_split = 'val2014'
+        else:
+            dataset_func = voc2007
+            data_split = 'val'
         if args.model == 'open_flamingo':
-            test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor, start_idx=start_idx
+            test_dataset = dataset_func(
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
             )
         elif args.model == 'blip':
-            test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.processor.image_processor, start_idx=start_idx
+            test_dataset = dataset_func(
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor
             )
         elif args.model == 'minigpt4':
-            test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.vis_processor, start_idx=start_idx
+            test_dataset = dataset_func(
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor
             )
         elif args.model == 'llava':
-            test_dataset = CocoDetection(
-                root=args.coco_dataroot, data_split='val2014', transform=eval_model.image_processor, start_idx=start_idx
+            test_dataset = dataset_func(
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
             )
         else:
             raise ValueError(f'model {args.model} is not supported')
