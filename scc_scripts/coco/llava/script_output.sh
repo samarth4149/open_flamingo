@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N give_an_elaborate_explanation_of_the_image_you_see
+#$ -N output
 
 #$ -m bea
 
@@ -41,4 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Give an elaborate explanation of the image you see " --eval_coco --coco_dataroot    ../../datasets/mscoco_2014/   --batch_size 16
+python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "output: " --eval_coco --coco_dataroot    ../../datasets/mscoco_2014/  --batch_size 16
