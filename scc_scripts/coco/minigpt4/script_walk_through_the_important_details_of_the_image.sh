@@ -44,4 +44,4 @@ conda activate openflamingo
 CFG_PATH='minigpt4/eval_configs/minigpt4_eval.yaml'
 DEVICE=0
 
-python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot    ../../datasets/mscoco_2014/    -device $DEVICE --coco_prompts "walk through the important details of the image " --model "minigpt4" --cfg-path $CFG_PATH
+python caption_evaluate.py  --batch_size 16 --eval_coco --coco_dataroot    ../../datasets/mscoco_2014/    -device $DEVICE --coco_prompts "walk through the important details of the image " --model "minigpt4" --cfg-path $CFG_PATH
