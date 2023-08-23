@@ -103,6 +103,7 @@ def extract_feature(data_loader):
     labels = torch.concat(all_labels)
     return torch.reshape(features, (features.shape[0], -1)), torch.reshape(labels, (labels.shape[0], -1))
 
+
 def compute_map(y_true, y_pred):
     """
     Compute Mean Average Precision (mAP) for binary multi-label classification

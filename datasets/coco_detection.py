@@ -106,13 +106,16 @@ class CocoDetection(datasets.coco.CocoDetection):
 
 
 if __name__ == '__main__':
-  root_path = '/projectnb/ivc-ml/sunxm/datasets/mscoco_2014/'
-  data_split = 'train2014'
-  dataset = CocoDetection(root_path,  data_split)
-  batch = dataset[100]
-  import pdb
-  pdb.set_trace()
-  data_split = 'val2014'
-  dataset = CocoDetection(root_path,  data_split)
-  batch = dataset[100]
-  pdb.set_trace()
+    transform_clip = transforms.Compose([
+        transforms.Resize(224, interpolation=Image.BICUBIC),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])
+    ])
+
+    root_path = '/projectnb/ivc-ml/sunxm/datasets/mscoco_2014/'
+    import pdb
+
+    data_split = 'val2014'
+    dataset = CocoDetection(root_path,  data_split,  transform=transform_clip)
+    batch = dataset[100]
+    pdb.set_trace()
