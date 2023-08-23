@@ -12,7 +12,7 @@ from datasets.coco_detection import CocoDetection
 from datasets.pascal_voc import voc2007
 from torchvision import transforms
 from PIL import Image
-from datasets import template_map
+from datasets import template_map, SimpleTokenizer
 import clip
 
 
@@ -70,6 +70,7 @@ def extract_text_features(prompt_template, classnames):
     for classname in tqdm(classnames, 'Extracting text features with model CLIP-VIT-L/14.'):
         if type(classname) == list: classname = classname[0]
         texts = [template.format(classname) for template in templates]
+        texts = SimpleTokenizer.tokenize(texts=texts, context_length=77).to('cuda:0')
         class_embeddings = model.encode_text(texts)
         class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
         class_embedding = class_embeddings.mean(dim=0)
