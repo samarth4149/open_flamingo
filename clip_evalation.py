@@ -67,15 +67,16 @@ def extract_text_features(prompt_template, classnames):
     model = get_model(feature_type='text')
     model.eval()
     zeroshot_weights = []
-    for classname in tqdm(classnames, 'Extracting text features with model CLIP-VIT-L/14.'):
-        if type(classname) == list: classname = classname[0]
-        texts = [template.format(classname) for template in templates]
-        texts = SimpleTokenizer().tokenize(texts=texts, context_length=77).to('cuda:0')
-        class_embeddings = model.encode_text(texts)
-        class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
-        class_embedding = class_embeddings.mean(dim=0)
-        class_embedding /= class_embedding.norm()
-        zeroshot_weights.append(class_embedding)
+    with torch.no_grad():
+        for classname in tqdm(classnames, 'Extracting text features with model CLIP-VIT-L/14.'):
+            if type(classname) == list: classname = classname[0]
+            texts = [template.format(classname) for template in templates]
+            texts = SimpleTokenizer().tokenize(texts=texts, context_length=77).to('cuda:0')
+            class_embeddings = model.encode_text(texts)
+            class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
+            class_embedding = class_embeddings.mean(dim=0)
+            class_embedding /= class_embedding.norm()
+            zeroshot_weights.append(class_embedding)
     zeroshot_weights = torch.stack(zeroshot_weights, dim=1).to('cuda:0')
     return zeroshot_weights
 
