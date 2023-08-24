@@ -172,11 +172,9 @@ image_features, targets = extract_feature(test_loader)
 
 # make prediction based on threshold
 cross_similarity = image_features @ text_features
-import pdb
-pdb.set_trace()
-predictions = (cross_similarity > args.threshold).int()
+# predictions = (cross_similarity > args.threshold).int()
 
-mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=predictions.cpu().numpy())
+mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=cross_similarity.cpu().numpy())
 
 print('mAP is %0.2f' % mAP)
 
