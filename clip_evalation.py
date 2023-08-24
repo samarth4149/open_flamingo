@@ -136,9 +136,11 @@ model_args = {
 if args.dataset_name == 'coco':
     dataset_func = CocoDetection
     data_split = 'val2014'
-else:
+elif args.dataset_name == 'pascal_voc':
     dataset_func = voc2007
     data_split = 'val'
+else:
+    raise ValueError('Dataset %s is not supported' % args.dataset_name)
 
 # define the data transform based on ELEVATER paper
 transform_clip = transforms.Compose([
