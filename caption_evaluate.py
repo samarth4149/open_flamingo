@@ -10,6 +10,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score
+import sng_parser
+from copy import deepcopy
 
 from nltk.corpus import wordnet
 from open_flamingo.eval.coco_metric import postprocess_captioning_generation
@@ -184,11 +186,11 @@ def create_html_page(triplets):
         html.append("<tr>")
         for j in range(3):
             if i + j < len(triplets):
-                image_path, predictions, labels = triplets[i + j]
+                image_path, caption, predictions, labels = triplets[i + j]
                 html.append("<td>")
                 html.append(f'<img src="file://{image_path}" width="300" height="300"><br>')
                 html.append("Predictions:<br>")
-                html.append(', '.join(predictions))
+                html.append(caption + '   ' +', '.join(predictions))
                 html.append("<br>")
                 html.append("Labels:<br>")
                 html.append(', '.join(labels))
@@ -297,9 +299,19 @@ def evaluate_captioning(
         else:
             new_predictions = outputs
 
+        modified_predictions = []
+        for pred in new_predictions:
+            pred_graph = sng_parser.parse(pred)
+            pred_entities = pred_graph['entities']
+            prediction = pred
+            for entity in pred_entities:
+                prediction.replace(entity['span'],  entity['lemma_head'])
+            modified_predictions.append(pred)
+
+
         # Generate predictions from captions
         predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
-        for b_idx, caption in enumerate(new_predictions):
+        for b_idx, caption in enumerate(modified_predictions):
             for c_idx, class_synonym in enumerate(class_synonyms):
                 for synonym in class_synonym:
                     if synonym in caption:
@@ -312,7 +324,7 @@ def evaluate_captioning(
         # generate triplets for visualization
         # # Example usage:
         visual_path = '/Users/sunxm/Documents/research/datasets/mscoco_2014/val2014'
-        for path, prediction, target in zip(batch_path, predictions, batch_target):
+        for path, caption, prediction, target in zip(batch_path, new_predictions, predictions, batch_target):
             # image_path
             image_path = os.path.join(visual_path, path)
             # predict list
@@ -320,7 +332,7 @@ def evaluate_captioning(
             # ground-truth label list
             target_np = target.cpu().numpy()
             gt_classes = class_names_np[target_np == 1]
-            triplet = (image_path, pred_classes, gt_classes)
+            triplet = (image_path, caption, pred_classes, gt_classes)
             triplets.append(triplet)
 
 
@@ -337,7 +349,7 @@ def evaluate_captioning(
     html_folder = 'html'
     if not os.path.isdir(html_folder):
         os.makedirs(html_folder)
-    with open(os.path.join(html_folder, '%s_%s_%s'% (dataset_name, args.model, '_'.join(args.coco_prompts))), 'w') as f:
+    with open(os.path.join(html_folder, '%s_%s_%s' % (dataset_name, args.model, '_'.join(args.coco_prompts))), 'w') as f:
         f.write(html)
 
 
