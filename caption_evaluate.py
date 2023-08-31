@@ -349,7 +349,7 @@ def evaluate_captioning(
                         best_c_idx = idx
 
                 if best_c_idx is None:
-                    predictions[b_idx, best_c_idx] = 1
+                    predictions[b_idx, best_c_idx] = best_score
 
         # compute mAP with the ground truth label
         targets.append(batch_target)
