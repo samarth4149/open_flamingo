@@ -348,10 +348,10 @@ def evaluate_captioning(
                         best_score = score
                         best_c_idx = idx
 
-                if best_c_idx is None:
+                if best_c_idx is not None:
                     predictions[b_idx, best_c_idx] = best_score
-                    import pdb
-                    pdb.set_trace()
+                    # import pdb
+                    # pdb.set_trace()
 
         # compute mAP with the ground truth label
         targets.append(batch_target)
