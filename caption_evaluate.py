@@ -340,6 +340,8 @@ def evaluate_captioning(
                 for match_synonym in match_synonyms:
                     idx, synonym = match_synonym
                     score = similarity(nlp, word, synonym)
+                    import pdb
+                    pdb.set_trace()
                     if score > best_score:
                         best_score = score
                         best_c_idx = idx
