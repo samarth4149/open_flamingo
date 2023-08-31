@@ -11,6 +11,8 @@ import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score
 import sng_parser
+import spacy
+
 from copy import deepcopy
 
 from nltk.corpus import wordnet
@@ -96,6 +98,18 @@ parser.add_argument(
 
 parser.add_argument("--cfg-path",  help="path to configuration file.")
 
+
+def similarity(nlp, phrase1, phrase2):
+    # Load the medium English model. This model has word vectors.
+    # nlp = spacy.load("en_core_web_md")
+
+    # Process the phrases to get their vector representations
+    phrase1 = nlp(phrase1)
+    phrase2 = nlp(phrase2)
+
+    # Compute the similarity between the two phrases
+    similarity = phrase1.similarity(phrase2)
+    return similarity
 
 def main():
     args, leftovers = parser.parse_known_args()
@@ -190,7 +204,7 @@ def create_html_page(triplets):
                 html.append("<td>")
                 html.append(f'<img src="file://{image_path}" width="300" height="300"><br>')
                 html.append("Predictions:<br>")
-                html.append(caption + '   ' +', '.join(predictions))
+                html.append(caption + '----' +', '.join(predictions))
                 html.append("<br>")
                 html.append("Labels:<br>")
                 html.append(', '.join(labels))
@@ -228,6 +242,7 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
+    nlp = spacy.load("en_core_web_md")
     if dataset_name in ["coco", "pascal_voc"]:
         # build test dataset
         if dataset_name == 'coco':
@@ -299,23 +314,38 @@ def evaluate_captioning(
         else:
             new_predictions = outputs
 
-        modified_predictions = []
+        pred_words = []
         for pred in new_predictions:
             pred_graph = sng_parser.parse(pred)
             pred_entities = pred_graph['entities']
-            prediction = pred
+            # prediction = pred
+            words = []
             for entity in pred_entities:
-                prediction.replace(entity['span'],  entity['lemma_head'])
-            modified_predictions.append(pred)
+                # prediction.replace(entity['span'],  entity['lemma_span'])
+                words.append(entity['lemma_span'])
+            pred_words.append(words)
 
 
         # Generate predictions from captions
         predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
-        for b_idx, caption in enumerate(modified_predictions):
-            for c_idx, class_synonym in enumerate(class_synonyms):
-                for synonym in class_synonym:
-                    if synonym in caption:
-                        predictions[b_idx, c_idx] = 1
+        for b_idx, words in enumerate(pred_words):
+            for word in words:
+                match_synonyms = []
+                for c_idx, class_synonym in enumerate(class_synonyms):
+                    for synonym in class_synonym:
+                        if synonym in word:
+                            match_synonyms.append((c_idx, synonym))
+                best_score = 0
+                best_c_idx = None
+                for match_synonym in match_synonyms:
+                    idx, synonym = match_synonym
+                    score = similarity(nlp, word, synonym)
+                    if score > best_score:
+                        best_score = score
+                        best_c_idx = idx
+
+                if best_c_idx is None:
+                    predictions[b_idx, best_c_idx] = 1
 
         # compute mAP with the ground truth label
         targets.append(batch_target)
@@ -349,7 +379,7 @@ def evaluate_captioning(
     html_folder = 'html'
     if not os.path.isdir(html_folder):
         os.makedirs(html_folder)
-    with open(os.path.join(html_folder, '%s_%s_%s' % (dataset_name, args.model, '_'.join(args.coco_prompts))), 'w') as f:
+    with open(os.path.join(html_folder, '%s_%s_%s.html' % (dataset_name, args.model, args.coco_prompts)), 'w') as f:
         f.write(html)
 
 
