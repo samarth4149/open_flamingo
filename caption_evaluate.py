@@ -347,7 +347,8 @@ def evaluate_captioning(
                         best_c_idx = idx
 
                 if best_c_idx is not None:
-                    predictions[b_idx, best_c_idx] = best_score
+                    # predictions[b_idx, best_c_idx] = best_score
+                    predictions[b_idx, best_c_idx] = 1
                     # import pdb
                     # pdb.set_trace()
 
