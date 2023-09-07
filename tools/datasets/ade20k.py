@@ -4,7 +4,7 @@ import numpy as np
 import pickle as pkl
 import utils_ade20k
 
-DATASET_PATH = '../dataset/'
+DATASET_PATH = '/projectnb/ivc-ml/sunxm/datasets/ADE20k/ADE20K_2021_17_01'
 index_file = 'index_ade20k.pkl'
 with open('{}/{}'.format(DATASET_PATH, index_file), 'rb') as f:
     index_ade20k = pkl.load(f)
