@@ -11,6 +11,7 @@ from tqdm import tqdm
 from datasets.coco_detection import CocoDetection
 from datasets.pascal_voc import voc2007
 from datasets.openimages_common import OpenImagesCommon
+from datasets.openimages_rare import OpenImagesRare
 from torchvision import transforms
 from PIL import Image
 from datasets import template_map, SimpleTokenizer
@@ -142,6 +143,9 @@ elif args.dataset_name == 'pascal_voc':
     data_split = 'val'
 elif args.dataset_name == 'OpenImagesV6Common':
     dataset_func = OpenImagesCommon
+    data_split = 'test'
+elif args.dataset_name == 'OpenImagesV6Rare':
+    dataset_func = OpenImagesRare
     data_split = 'test'
 else:
     raise ValueError('Dataset %s is not supported' % args.dataset_name)
