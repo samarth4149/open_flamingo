@@ -17,6 +17,8 @@ print('--------------------------------------------\n')
 
 i = 16868 # 16899, 16964
 nfiles = len(index_ade20k['filename'])
+import pdb
+pdb.set_trace()
 file_name = index_ade20k['filename'][i]
 num_obj = index_ade20k['objectPresence'][:, i].sum()
 num_parts = index_ade20k['objectIsPart'][:, i].sum()
