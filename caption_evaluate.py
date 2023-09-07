@@ -26,6 +26,7 @@ from open_flamingo.eval.eval_model import BaseEvalModel
 
 from datasets.coco_detection import CocoDetection
 from datasets.pascal_voc import voc2007
+from datasets.openimages_common import OpenImagesCommon
 import pickle
 
 parser = argparse.ArgumentParser()
@@ -243,14 +244,20 @@ def evaluate_captioning(
 
     """
     nlp = spacy.load("en_core_web_md")
-    if dataset_name in ["coco", "pascal_voc"]:
+    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common"]:
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection
             data_split = 'val2014'
-        else:
+        elif dataset_name == 'pascal_voc':
             dataset_func = voc2007
             data_split = 'val'
+        elif dataset_name == 'OpenImagesV6Common':
+            dataset_func = OpenImagesCommon
+            data_split = 'test'
+        else:
+            raise ValueError
+
         if args.model == 'open_flamingo':
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
@@ -430,14 +437,19 @@ def evaluate_vqa(
         triplets = []
     # build test dataset
     print(start_idx)
-    if dataset_name in ["coco", "pascal_voc"]:
+    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common"]:
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection
             data_split = 'val2014'
-        else:
+        elif dataset_name == 'pascal_voc':
             dataset_func = voc2007
             data_split = 'val'
+        elif dataset_name == 'OpenImagesV6Common':
+            dataset_func = OpenImagesCommon
+            data_split = 'test'
+        else:
+            raise ValueError
         if args.model == 'open_flamingo':
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor, start_idx=start_idx
