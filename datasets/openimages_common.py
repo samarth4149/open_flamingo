@@ -36,7 +36,7 @@ class OpenImagesCommon(data.Dataset):
 
         # self.annFile = os.path.join(self.root, 'common/openimages_common_214_ram_taglist.txt')
 
-        image_list_file = os.path.join(self.root, 'common/openimages_common_214_ram_taglist.txt')
+        image_list_file = os.path.join(self.root, 'common/openimages_rare_200_ram_annots.txt')
 
         with open(image_list_file) as f:
             image_list = f.readlines()
