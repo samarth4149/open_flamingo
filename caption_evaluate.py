@@ -28,6 +28,7 @@ from datasets.coco_detection import CocoDetection
 from datasets.pascal_voc import voc2007
 from datasets.openimages_common import OpenImagesCommon
 from datasets.openimages_rare import OpenImagesRare
+from datasets.ade20k import ADE20k
 import pickle
 
 parser = argparse.ArgumentParser()
@@ -245,7 +246,7 @@ def evaluate_captioning(
 
     """
     nlp = spacy.load("en_core_web_md")
-    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare"]:
+    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection
@@ -258,6 +259,9 @@ def evaluate_captioning(
             data_split = 'test'
         elif args.dataset_name == 'OpenImagesV6Rare':
             dataset_func = OpenImagesRare
+            data_split = 'test'
+        elif args.dataset_name == 'ADE20k':
+            dataset_func = ADE20k
             data_split = 'test'
         else:
             raise ValueError
@@ -441,7 +445,7 @@ def evaluate_vqa(
         triplets = []
     # build test dataset
     print(start_idx)
-    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare"]:
+    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", 'ADE20k']:
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection
@@ -454,6 +458,9 @@ def evaluate_vqa(
             data_split = 'test'
         elif args.dataset_name == 'OpenImagesV6Rare':
             dataset_func = OpenImagesRare
+            data_split = 'test'
+        elif args.dataset_name == 'ADE20k':
+            dataset_func = ADE20k
             data_split = 'test'
         else:
             raise ValueError
@@ -569,7 +576,6 @@ def evaluate_vqa(
         os.makedirs(html_folder)
     with open(os.path.join(html_folder, '%s_vqa_%s_%s'% (dataset_name, args.model, '_'.join(args.coco_prompts))), 'w') as f:
         f.write(html)
-
 
 
 if __name__ == "__main__":
