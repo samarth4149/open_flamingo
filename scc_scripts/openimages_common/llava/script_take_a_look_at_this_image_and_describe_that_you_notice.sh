@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N Could_you_describe_the_contents_of_this_image_for_me
+#$ -N  Take_a_look_at_this_image_and_describe_that_you_notice
 
 #$ -m bea
 
@@ -41,7 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-CFG_PATH='minigpt4/eval_configs/minigpt4_eval.yaml'
-DEVICE=0
-
-python caption_evaluate.py  --batch_size 16 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/mscoco_2014/  -device $DEVICE --coco_prompts "Could you describe the contents of this image for me?" --model "minigpt4" --cfg-path $CFG_PATH --dataset_name OpenImagesV6Common
+python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Take a look at this image and describe that you notice " --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/ --batch_size 16   --dataset_name OpenImagesV6Common

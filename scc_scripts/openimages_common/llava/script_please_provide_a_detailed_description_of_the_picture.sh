@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N clarify_the_contents_of_the_displayed_image_with_great_detail
+#$ -N  please_provide_a_detailed_description_of_the_picture
 
 #$ -m bea
 
@@ -41,4 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Clarify the contents of the displayed image with great detail " --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --batch_size 16   --dataset_name OpenImagesV6Common
+python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Please provide a detailed description of the picture " --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/ --batch_size 16   --dataset_name OpenImagesV6Common

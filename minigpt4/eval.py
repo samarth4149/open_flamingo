@@ -91,7 +91,6 @@ class MiniGPT4():
         embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
         mixed_embs = torch.cat(embs, dim=1)
 
-
         outputs = self.model.llama_model.generate(
             inputs_embeds=mixed_embs,
             max_new_tokens=max_new_tokens,

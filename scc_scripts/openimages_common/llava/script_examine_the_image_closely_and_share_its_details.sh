@@ -41,7 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-CFG_PATH='minigpt4/eval_configs/minigpt4_eval.yaml'
-DEVICE=0
-
-python caption_evaluate.py  --batch_size 16 --eval_coco  --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/      -device $DEVICE --coco_prompts "examine the image closely and share its details " --model "minigpt4" --cfg-path $CFG_PATH --dataset_name OpenImagesV6Common
+python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Examine the image closely and share its details " --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --batch_size 16   --dataset_name OpenImagesV6Common
