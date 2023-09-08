@@ -44,6 +44,7 @@ class ADE20k(data.Dataset):
 
         self.image_list = image_list[start_idx: ]
         self.labels = index_ade20k['objectIsPart']
+        self.labels[self.labels != 0] = 1
         self.transform = transform
 
     def __len__(self):
