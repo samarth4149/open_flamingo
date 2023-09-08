@@ -11,6 +11,9 @@ import xml.dom.minidom
 
 from minigpt4.processors.blip_processors import Blip2ImageEvalProcessor
 from transformers import CLIPImageProcessor
+import pickle as pkl
+import utils_ade20k
+
 
 def read_labels(path_labels):
     file = path_labels
@@ -22,40 +25,36 @@ def read_labels(path_labels):
     return labels
 
 
-class OpenImagesCommon(data.Dataset):
+class ADE20k(data.Dataset):
     def __init__(self, root, data_split, transform=None, start_idx=0):
         # data_split = train / val
         self.root = root
-        classnames = []
-        class_name_file = 'common/openimages_common_214_ram_taglist.txt'
-        with open(os.path.join(self.root, class_name_file), 'r') as f:
-            lines = f.readlines()
-            for line in lines:
-                classnames.append(line.strip())
+        index_file = 'ADE20K_2021_17_01/index_ade20k_validation.pkl'
+        with open('{}/{}'.format(root, index_file), 'rb') as f:
+            index_ade20k = pkl.load(f)
+        classnames = index_ade20k['objectnames']
+
         self.classnames = classnames
 
-        # self.annFile = os.path.join(self.root, 'common/openimages_common_214_ram_taglist.txt')
+        image_list = []
+        for folder, filename in zip(index_ade20k['folder'], index_ade20k['filename']):
+            full_file_name = '{}/{}'.format(folder, filename)
+            info = utils_ade20k.loadAde20K('{}/{}'.format(root, full_file_name))
+            image_list.append(info['img_name'])
 
-        image_list_file = os.path.join(self.root, 'common/openimages_common_214_ram_annots.txt')
-
-        with open(image_list_file) as f:
-            image_list = f.readlines()
-        self.image_list = [a.strip() for a in image_list]
-        self.image_list = self.image_list[start_idx: ]
-
+        self.image_list = image_list[start_idx: ]
+        self.labels = index_ade20k['objectIsPart']
         self.transform = transform
 
     def __len__(self):
         return len(self.image_list)
 
     def __getitem__(self, index):
-        tokens = self.image_list[index].split(',')
-        img_path = os.path.join(self.root, tokens[0] + '.jpg')
+        img_path = self.image_list[index]
         img = Image.open(img_path).convert('RGB')
-        label_vector = torch.zeros(len(self.classnames))
-        for token in tokens[1:]:
-            label_vector[self.classnames.index(token)] = 1
-
+        label_vector = torch.from_numpy(self.labels[:index]).view(-1)
+        import pdb
+        pdb.set_trace()
         targets = label_vector.long()
         target = targets[None,]
 
@@ -73,13 +72,13 @@ class OpenImagesCommon(data.Dataset):
         return img, target, img_path
 
     def name(self):
-        return 'openimagesv6_common'
+        return 'ADE20k'
 
 
 if __name__ == '__main__':
-  root_path = '/projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/'
+  root_path = '/projectnb/ivc-ml/sunxm/datasets/ADE20k'
   data_split = 'test'
-  dataset = OpenImagesCommon(root_path,  data_split)
+  dataset = ADE20k(root_path,  data_split)
   batch = dataset[100]
   import pdb
   pdb.set_trace()
