@@ -12,7 +12,7 @@ import xml.dom.minidom
 from minigpt4.processors.blip_processors import Blip2ImageEvalProcessor
 from transformers import CLIPImageProcessor
 import pickle as pkl
-import utils_ade20k
+from . import utils_ade20k
 
 
 def read_labels(path_labels):
