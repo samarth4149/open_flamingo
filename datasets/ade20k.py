@@ -52,9 +52,7 @@ class ADE20k(data.Dataset):
     def __getitem__(self, index):
         img_path = self.image_list[index]
         img = Image.open(img_path).convert('RGB')
-        import pdb
-        pdb.set_trace()
-        label_vector = torch.from_numpy(self.labels[:index]).view(-1)
+        label_vector = torch.from_numpy(self.labels[:, index]).reshape(-1)
 
         targets = label_vector.long()
         target = targets[None,]
