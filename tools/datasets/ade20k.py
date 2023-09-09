@@ -15,5 +15,5 @@ for file in glob.glob(annotation_folder_path+'/*.png'):
     lines.append(line)
 
 annotation_file_path = '/projectnb/ivc-ml/sunxm/datasets/ADEChallengeData2016/annotations/validation.txt'
-with open(annotation_file_path, 'wb') as f:
+with open(annotation_file_path, 'w+') as f:
     f.writelines(lines)
