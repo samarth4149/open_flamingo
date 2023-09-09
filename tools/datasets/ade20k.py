@@ -9,7 +9,7 @@ lines = []
 for file in glob.glob(annotation_folder_path+'/*.png'):
     img = cv2.imread(file)
     labels = np.unique(img)
-    labels_str = [str(a) for a in labels]
+    labels_str = [str(a) for a in labels if a != 0]
     base_name = os.path.basename(file)
     line = base_name + ',' + ','.join(labels_str) + '\n'
     import pdb
