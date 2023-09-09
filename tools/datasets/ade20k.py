@@ -1,76 +1,18 @@
-import matplotlib.pyplot as plt
+import glob
+import os
 import cv2
-import numpy as np
-import pickle as pkl
-import utils_ade20k
 
-DATASET_PATH = '/projectnb/ivc-ml/sunxm/datasets/ADE20k'
-index_file = 'ADE20K_2021_17_01/index_ade20k.pkl'
-with open('{}/{}'.format(DATASET_PATH, index_file), 'rb') as f:
-    index_ade20k = pkl.load(f)
+# read in the annotation file
+annotation_folder_path = '/projectnb/ivc-ml/sunxm/datasets/ADEChallengeData2016/annotations/validation'
+lines = []
+for file in glob.glob(annotation_folder_path+'/*.png'):
+    img = cv2.imread(file)
+    labels = img.unique()
+    labels_str = [str(a) for a in labels]
+    base_name = os.path.basename(file)
+    line = base_name + ',' + ','.join(labels_str) + '\n'
+    lines.append(line)
 
-print("File loaded, description of the attributes:")
-print('--------------------------------------------')
-for attribute_name, desc in index_ade20k['description'].items():
-    print('* {}: {}'.format(attribute_name, desc))
-print('--------------------------------------------\n')
-
-# i = 16868 # 16899, 16964
-nfiles = len(index_ade20k['filename'])
-
-validation_idx = []
-for idx in range(nfiles):
-    if 'validation' in index_ade20k['folder'][idx]:
-        validation_idx.append(idx)
-
-print('the number of examples in validation set = %d' % len(validation_idx))
-
-# replace filename
-new_filenames = [index_ade20k['filename'][idx] for idx in validation_idx]
-new_folder = [index_ade20k['folder'][idx] for idx in validation_idx]
-new_objectPresence = index_ade20k['objectIsPart'][:, validation_idx]
-new_scene = [index_ade20k['scene'][idx] for idx in validation_idx]
-
-index_ade20k['filename'] = new_filenames
-index_ade20k['folder'] = new_folder
-index_ade20k['objectPresence'] = new_objectPresence
-index_ade20k['scene'] = new_scene
-
-index_file = 'ADE20K_2021_17_01/index_ade20k_validation.pkl'
-with open('{}/{}'.format(DATASET_PATH, index_file), 'wb') as f:
-    pkl.dump(index_ade20k, f)
-
-# file_name = index_ade20k['filename'][idx]
-# num_obj = index_ade20k['objectPresence'][:, idx].sum()
-# num_parts = index_ade20k['objectIsPart'][:, idx].sum()
-# count_obj = index_ade20k['objectPresence'][:, idx].max()
-# obj_id = np.where(index_ade20k['objectPresence'][:, idx] == count_obj)[0][0]
-# obj_name = index_ade20k['objectnames'][obj_id]
-# full_file_name = '{}/{}'.format(index_ade20k['folder'][idx], index_ade20k['filename'][idx])
-# print("The dataset has {} images".format(nfiles))
-# print("The image at index {} is {}".format(i, file_name))
-# print("It is located at {}".format(full_file_name))
-# print("It happens in a {}".format(index_ade20k['scene'][i]))
-# print("It has {} objects, of which {} are parts".format(num_obj, num_parts))
-# print("The most common object is object {} ({}), which appears {} times".format(obj_name, obj_id, count_obj))
-#
-# root_path = DATASET_PATH
-#
-# # This function reads the image and mask files and generate instance and segmentation
-# # masks
-# info = utils_ade20k.loadAde20K('{}/{}'.format(root_path, full_file_name))
-# img = cv2.imread(info['img_name'])[:,:,::-1]
-# seg = cv2.imread(info['segm_name'])[:,:,::-1]
-# seg_mask = seg.copy()
-#
-# # The 0 index in seg_mask corresponds to background (not annotated) pixels
-# seg_mask[info['class_mask'] != obj_id+1] *= 0
-# plt.figure(figsize=(15,5))
-#
-# plt.imshow(np.concatenate([img, seg, seg_mask], 1))
-# plt.axis('off')
-# if len(info['partclass_mask']):
-#     plt.figure(figsize=(5*len(info['partclass_mask']), 5))
-#     plt.title('Parts')
-#     plt.imshow(np.concatenate(info['partclass_mask'],1))
-#     plt.axis('off')
+annotation_file_path = '/projectnb/ivc-ml/sunxm/datasets/ADEChallengeData2016/annotations/validation.txt'
+with open(annotation_file_path, 'wb') as f:
+    f.writelines(lines)
