@@ -295,10 +295,10 @@ def evaluate_captioning(
         _class_names = class_name.split(',')
         for _class_name in _class_names:
             _class_name = _class_name.strip()
-            synonyms.add(_class_name)
+            synonyms.add(_class_name.replace('_', ' '))
             for syn in wordnet.synsets(_class_name):
                 for l in syn.lemmas():
-                    synonyms.add(l.name())
+                    synonyms.add(l.name().replace('_', ' '))
         class_synonyms.append(list(synonyms))
     import pdb
     pdb.set_trace()
