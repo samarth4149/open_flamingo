@@ -299,6 +299,8 @@ def evaluate_captioning(
                 for l in syn.lemmas():
                     synonyms.add(l.name())
         class_synonyms.append(list(synonyms))
+    import pdb
+    pdb.set_trace()
 
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
