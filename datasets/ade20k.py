@@ -40,7 +40,7 @@ class ADE20k(data.Dataset):
 
         self.classnames = classnames
 
-        image_ann_file = os.path.join(root, '%s.txt' % data_split)
+        image_ann_file = os.path.join(root, 'annotations', '%s.txt' % data_split)
         with open(image_ann_file, 'r') as f:
             image_list = f.readlines()
 
