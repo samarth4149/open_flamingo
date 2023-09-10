@@ -54,7 +54,7 @@ class ADE20k(data.Dataset):
     def __getitem__(self, index):
         line = self.image_list[index]
         tokens = line.split(',')
-        img_path = os.path.join('images', self.data_split, tokens[0])
+        img_path = os.path.join('images', self.data_split, tokens[0]).replace('png', 'jpg')
         img = Image.open(os.path.join(self.root, img_path)).convert('RGB')
         label_vector = torch.zeros(len(self.classnames)).reshape(-1)
         for token in tokens[1:]:
