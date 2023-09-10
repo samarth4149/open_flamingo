@@ -35,7 +35,7 @@ class ADE20k(data.Dataset):
             lines = f.readlines()
         lines = lines[1:]
         for line in lines:
-            tokens = line.strip().split(' ')
+            tokens = line.strip().split('\t')
             import pdb
             pdb.set_trace()
             classnames.append(tokens[-1])
