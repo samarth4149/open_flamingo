@@ -36,6 +36,8 @@ class ADE20k(data.Dataset):
         lines = lines[1:]
         for line in lines:
             tokens = line.strip().split(' ')
+            import pdb
+            pdb.set_trace()
             classnames.append(tokens[-1])
 
         self.classnames = classnames
