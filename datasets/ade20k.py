@@ -29,31 +29,36 @@ class ADE20k(data.Dataset):
     def __init__(self, root, data_split, transform=None, start_idx=0):
         # data_split = train / val
         self.root = root
-        index_file = 'ADE20K_2021_17_01/index_ade20k_validation.pkl'
-        with open('{}/{}'.format(root, index_file), 'rb') as f:
-            index_ade20k = pkl.load(f)
-        classnames = index_ade20k['objectnames']
+        object_list = os.path.join(root, 'objectInfo150.txt')
+        classnames = []
+        with open(object_list, 'r') as f:
+            lines = f.readlines()
+        lines = lines[1:]
+        for line in lines:
+            tokens = line.strip().split(' ')
+            classnames.append(tokens[-1])
 
         self.classnames = classnames
 
-        image_list = []
-        for folder, filename in zip(index_ade20k['folder'], index_ade20k['filename']):
-            full_file_name = '{}/{}'.format(folder, filename)
-            info = utils_ade20k.loadAde20K('{}/{}'.format(root, full_file_name))
-            image_list.append(info['img_name'])
+        image_ann_file = os.path.join(root, '%s.txt' % data_split)
+        with open(image_ann_file, 'r') as f:
+            image_list = f.readlines()
 
-        self.image_list = image_list[start_idx: ]
-        self.labels = index_ade20k['objectIsPart']
-        self.labels[self.labels != 0] = 1
+        self.data_split = data_split
+        self.image_list = image_list[start_idx:]
         self.transform = transform
 
     def __len__(self):
         return len(self.image_list)
 
     def __getitem__(self, index):
-        img_path = self.image_list[index]
-        img = Image.open(img_path).convert('RGB')
-        label_vector = torch.from_numpy(self.labels[:, index]).reshape(-1)
+        line = self.image_list[index]
+        tokens = line.split(',')
+        img_path = os.path.join('images', self.data_split, tokens[0])
+        img = Image.open(os.path.join(self.root, img_path)).convert('RGB')
+        label_vector = torch.zeros(len(self.classnames)).reshape(-1)
+        for token in tokens[1:]:
+            label_vector[int(token)] = 1
 
         targets = label_vector.long()
         target = targets[None,]
@@ -76,8 +81,8 @@ class ADE20k(data.Dataset):
 
 
 if __name__ == '__main__':
-  root_path = '/projectnb/ivc-ml/sunxm/datasets/ADE20k'
-  data_split = 'test'
+  root_path = '/projectnb/ivc-ml/sunxm/datasets/ADEChallengeData2016'
+  data_split = 'validation'
   dataset = ADE20k(root_path,  data_split)
   batch = dataset[100]
   import pdb
