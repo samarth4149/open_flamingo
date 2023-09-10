@@ -150,7 +150,7 @@ elif args.dataset_name == 'OpenImagesV6Rare':
     data_split = 'test'
 elif args.dataset_name == 'ADE20k':
     dataset_func = ADE20k
-    data_split = 'test'
+    data_split = 'validation'
 else:
     raise ValueError('Dataset %s is not supported' % args.dataset_name)
 
