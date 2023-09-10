@@ -292,10 +292,12 @@ def evaluate_captioning(
     class_names_np = np.array(class_names)
     for class_name in class_names:
         synonyms = set()
-        synonyms.add(class_name)
-        for syn in wordnet.synsets(class_name):
-            for l in syn.lemmas():
-                synonyms.add(l.name())
+        class_names = class_name.split(',')
+        for _class_name in class_names:
+            synonyms.add(_class_name)
+            for syn in wordnet.synsets(_class_name):
+                for l in syn.lemmas():
+                    synonyms.add(l.name())
         class_synonyms.append(list(synonyms))
 
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
