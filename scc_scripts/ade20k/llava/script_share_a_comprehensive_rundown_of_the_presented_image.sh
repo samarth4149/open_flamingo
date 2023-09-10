@@ -41,4 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Share a comprehensive rundown of the presented image " --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --batch_size 16   --dataset_name OpenImagesV6Rare
+python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "Share a comprehensive rundown of the presented image " --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/ADEChallengeData2016/  --batch_size 16   --dataset_name ADE20k
