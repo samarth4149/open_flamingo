@@ -500,9 +500,6 @@ def evaluate_vqa(
 
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
-    import pdb
-    pdb.set_trace()
-
     count = 0
     for batch in tqdm(iter(test_dataloader)):
         batch_images, batch_target, batch_path = batch

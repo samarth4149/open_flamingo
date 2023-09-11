@@ -41,8 +41,6 @@ class OpenImagesRare(data.Dataset):
         with open(image_list_file) as f:
             image_list = f.readlines()
         self.image_list = [a.strip() for a in image_list]
-        import pdb
-        pdb.set_trace()
         self.image_list = self.image_list[start_idx: ]
 
         self.transform = transform
