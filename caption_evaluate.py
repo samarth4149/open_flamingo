@@ -550,7 +550,7 @@ def evaluate_vqa(
             # ground-truth label list
             target_np = target.cpu().numpy()
             gt_classes = class_names_np[target_np == 1]
-            triplet = (image_path, pred_classes, gt_classes)
+            triplet = (image_path, None, pred_classes, gt_classes)
             triplets.append(triplet)
 
         count += 1
