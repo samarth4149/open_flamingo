@@ -489,6 +489,7 @@ def evaluate_vqa(
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
     class_names = test_dataset.classnames
+    class_names_np = np.array(class_names)
 
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
