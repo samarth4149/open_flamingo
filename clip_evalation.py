@@ -73,7 +73,8 @@ def extract_text_features(prompt_template, classnames):
     with torch.no_grad():
         for classname in tqdm(classnames, 'Extracting text features with model CLIP-VIT-L/14.'):
             if type(classname) == list: classname = classname[0]
-            texts = [template.format(classname) for template in templates]
+            _classnames = classname.split(',')
+            texts = [template.format(_classname) for template in templates for _classname in _classnames]
             texts = SimpleTokenizer().tokenize(texts=texts, context_length=77).to('cuda:0')
             class_embeddings = model.encode_text(texts)
             class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
