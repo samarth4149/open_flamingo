@@ -45,4 +45,4 @@ LM_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
 PROCESSOR_PATH="/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl"
 DEVICE=0
 
-python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --processor_path $PROCESSOR_PATH --device $DEVICE --vqa --model "blip" --lm_path $LM_PATH --output_dir snapshots/blip_vqa --save_freq 10 --dataset_name OpenImagesV6Rare
+python caption_evaluate.py  --batch_size 32 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --processor_path $PROCESSOR_PATH --device $DEVICE --vqa --model "blip" --lm_path $LM_PATH --output_dir snapshots/blip_vqa/openimagesv6rare --save_freq 10 --dataset_name OpenImagesV6Rare

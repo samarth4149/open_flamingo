@@ -42,4 +42,4 @@ echo 'activating virtual environment'
 conda activate openflamingo
 
 
-python caption_evaluate.py  --batch_size 16 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --vqa --model "llava"  --output_dir snapshots/llava_vqa --save_freq 10  --model_name ../../ckpt/llava_13b/  --dataset_name OpenImagesV6Rare
+python caption_evaluate.py  --batch_size 16 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --vqa --model "llava"  --output_dir snapshots/llava_vqa/openimagesv6rare --save_freq 10  --model_name ../../ckpt/llava_13b/  --dataset_name OpenImagesV6Rare

@@ -45,4 +45,4 @@ CFG_PATH='minigpt4/eval_configs/minigpt4_eval.yaml'
 DEVICE=0
 
 
-python caption_evaluate.py  --batch_size 16 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --device $DEVICE --vqa --model "minigpt4"  --output_dir snapshots/minigpt4-val --save_freq 10  --cfg-path $CFG_PATH --dataset_name OpenImagesV6Rare
+python caption_evaluate.py  --batch_size 16 --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/OpenImagesV6/  --device $DEVICE --vqa --model "minigpt4"  --output_dir snapshots/minigpt4-vqa/openimagesv6rare --save_freq 10  --cfg-path $CFG_PATH --dataset_name OpenImagesV6Rare
