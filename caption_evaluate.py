@@ -488,15 +488,7 @@ def evaluate_vqa(
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
-    class_synonyms = []
     class_names = test_dataset.classnames
-    class_names_np = np.array(class_names)
-    for class_name in class_names:
-        synonyms = [class_name]
-        for syn in wordnet.synsets(class_name):
-            for l in syn.lemmas():
-                synonyms.append(l.name())
-        class_synonyms.append(synonyms)
 
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
@@ -510,7 +502,8 @@ def evaluate_vqa(
 
         predictions = np.zeros((len(batch_images), len(class_names)), dtype=np.int32)
         for c_idx, class_name in enumerate(class_names):
-            prompt = f'is there a {class_name} in the image?'
+            _class_name = class_name.split(',')[0]
+            prompt = f'is there a {_class_name} in the image?'
             if args.model in ['minigpt4', 'llava']:
                 outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
             else:
