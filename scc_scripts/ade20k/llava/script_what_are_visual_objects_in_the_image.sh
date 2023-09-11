@@ -41,4 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate openflamingo
 
-python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "what are visual objects in the image?" --eval_coco --coco_dataroot    ../../datasets/mscoco_2014/
+python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "what are visual objects in the image?" --eval_coco --coco_dataroot /projectnb/ivc-ml/sunxm/datasets/ADEChallengeData2016/   --dataset_name ADE20k
