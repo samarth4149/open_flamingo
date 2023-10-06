@@ -135,6 +135,7 @@ def main():
     else:
         evaluate_captioning(args, eval_model=eval_model, dataset_name=args.dataset_name)
 
+
 def get_random_indices(num_samples, query_set_size, full_dataset, seed):
     if num_samples + query_set_size > len(full_dataset):
         raise ValueError(

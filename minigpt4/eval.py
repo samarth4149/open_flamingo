@@ -76,6 +76,8 @@ class MiniGPT4():
         image_emb, _ = self.model.encode_img(batch_images)
 
         messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", None)]
+        import pdb
+        pdb.set_trace()
         sentence = self.create_prompt(system, sep, messages)
 
         sentence_segs = sentence.split('<ImageHere>')
@@ -90,6 +92,8 @@ class MiniGPT4():
         seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
         embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
         mixed_embs = torch.cat(embs, dim=1)
+        import pdb
+        pdb.set_trace()
 
         outputs = self.model.llama_model.generate(
             inputs_embeds=mixed_embs,
