@@ -142,7 +142,7 @@ if args.dataset_name == 'coco':
     data_split = 'val2014'
 elif args.dataset_name == 'pascal_voc':
     dataset_func = voc2007
-    data_split = 'val'
+    data_split = 'test'
 elif args.dataset_name == 'OpenImagesV6Common':
     dataset_func = OpenImagesCommon
     data_split = 'test'
