@@ -11,7 +11,14 @@ from minigpt4.common.dist_utils import get_rank
 from minigpt4.common.registry import registry
 from minigpt4.conversation.conversation import Chat, CONV_VISION
 from transformers import StoppingCriteria, StoppingCriteriaList
+from ..models.prompt_learning import PromptLearner
 
+import re
+
+def split_string(s, delimiters):
+    pattern = '|'.join(map(re.escape, delimiters))
+    split_string = re.split(pattern, s)
+    return split_string
 
 class StoppingCriteriaSub(StoppingCriteria):
     def __init__(self, stops=[], encounters=1):
@@ -27,7 +34,7 @@ class StoppingCriteriaSub(StoppingCriteria):
 
 
 class MiniGPT4():
-    def __init__(self, model_config, vis_processor_cfg, gpu_id):
+    def __init__(self, model_config, vis_processor_cfg, gpu_id, learnable_prompt=0):
         self.model_config = model_config
         self.model_config.device_8bit = gpu_id
         self.device = 'cuda:{}'.format(gpu_id)
@@ -40,7 +47,10 @@ class MiniGPT4():
         stop_words_ids = [torch.tensor([835]).to(self.device),
                           torch.tensor([2277, 29937]).to(self.device)]
         self.stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
-
+        if learnable_prompt > 0:
+            self.prompt_learner = PromptLearner(learnable_prompt, 5120, dtype = torch.float32)
+        else:
+            self.prompt_learner = None
 
     @staticmethod
     def create_prompt(system, sep, messages):
@@ -69,15 +79,13 @@ class MiniGPT4():
 
     def get_outputs(self, batch_images,
                     system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
-                    sep = "###", prompt = 'describe the image as detailed as possible',
+                    sep = "###", prompt= 'describe the image as detailed as possible',
                     max_new_tokens=200, num_beams=1, do_sample=True, min_length=1, top_p=0.9, repetition_penalty=1.0,
                     length_penalty=1, temperature=1.0):
         batch_images = batch_images.to(self.device)
         image_emb, _ = self.model.encode_img(batch_images)
 
         messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", None)]
-        import pdb
-        pdb.set_trace()
         sentence = self.create_prompt(system, sep, messages)
 
         sentence_segs = sentence.split('<ImageHere>')
@@ -92,8 +100,51 @@ class MiniGPT4():
         seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
         embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
         mixed_embs = torch.cat(embs, dim=1)
-        import pdb
-        pdb.set_trace()
+
+        outputs = self.model.llama_model.generate(
+            inputs_embeds=mixed_embs,
+            max_new_tokens=max_new_tokens,
+            stopping_criteria=self.stopping_criteria,
+            num_beams=num_beams,
+            do_sample=do_sample,
+            min_length=min_length,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
+            length_penalty=length_penalty,
+            temperature=temperature
+        )
+
+        new_predictions = [self.process_output(output) for output in outputs]
+
+        return new_predictions
+
+    def get_prompt_outputs(self, batch_images,
+                    system="Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
+                    sep="###",
+                    max_new_tokens=200, num_beams=1, do_sample=True, min_length=1, top_p=0.9, repetition_penalty=1.0,
+                    length_penalty=1, temperature=1.0):
+        batch_images = batch_images.to(self.device)
+        image_emb, _ = self.model.encode_img(batch_images)
+
+        prompt = self.prompt_learner()
+
+        messages = [("Human", "<Img><ImageHere></Img> %s" % '<PromptHere>'), ("Assistant", None)]
+        sentence = self.create_prompt(system, sep, messages)
+
+        sentence_segs = split_string(sentence, ['<ImageHere>', '<PromptHere>'])
+
+        seg_tokens = [
+            self.model.llama_tokenizer(
+                seg, return_tensors="pt", add_special_tokens=i == 0).to(self.device).input_ids
+            # only add bos to the first seg
+            for i, seg in enumerate(sentence_segs)
+        ]
+
+        seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+        embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb,
+                self.expand_emb(seg_embs[1], batch_images.shape[0]), self.expand_emb(prompt, batch_images.shape[0]),
+                self.expand_emb(seg_embs[2], batch_images.shape[0])]
+        mixed_embs = torch.cat(embs, dim=1)
 
         outputs = self.model.llama_model.generate(
             inputs_embeds=mixed_embs,
