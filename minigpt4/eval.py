@@ -104,18 +104,22 @@ class MiniGPT4():
         embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
         mixed_embs = torch.cat(embs, dim=1)
 
-        outputs = self.model.llama_model.generate(
-            inputs_embeds=mixed_embs,
-            max_new_tokens=max_new_tokens,
-            stopping_criteria=self.stopping_criteria,
-            num_beams=num_beams,
-            do_sample=do_sample,
-            min_length=min_length,
-            top_p=top_p,
-            repetition_penalty=repetition_penalty,
-            length_penalty=length_penalty,
-            temperature=temperature
-        )
+        # outputs = self.model.llama_model.generate(
+        #     inputs_embeds=mixed_embs,
+        #     max_new_tokens=max_new_tokens,
+        #     stopping_criteria=self.stopping_criteria,
+        #     num_beams=num_beams,
+        #     do_sample=do_sample,
+        #     min_length=min_length,
+        #     top_p=top_p,
+        #     repetition_penalty=repetition_penalty,
+        #     length_penalty=length_penalty,
+        #     temperature=temperature
+        # )
+        with torch.no_grad():
+            outputs = self.model.llama_model(
+                inputs_embeds=mixed_embs,
+            )
         import pdb
         pdb.set_trace()
         new_predictions = [self.process_output(output) for output in outputs]
