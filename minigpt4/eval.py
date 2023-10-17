@@ -116,7 +116,8 @@ class MiniGPT4():
             length_penalty=length_penalty,
             temperature=temperature
         )
-
+        import pdb
+        pdb.set_trace()
         new_predictions = [self.process_output(output) for output in outputs]
 
         return new_predictions
