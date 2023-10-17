@@ -213,6 +213,8 @@ class MiniGPT4(Blip2Base):
                 return_dict=True,
                 labels=targets,
             )
+        import pdb
+        pdb.set_trace()
         loss = outputs.loss
 
         return {"loss": loss}
