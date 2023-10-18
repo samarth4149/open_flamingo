@@ -184,7 +184,7 @@ class MiniGPT4():
             probs = probs[:, :-1, :]
             probs = probs[:, -(overall_length-prefix_length):, :]
             input_ids = seg_2nd_token[:, prefix_2nd_token.shape[1]:]
-            input_ids = self.expand_emb(input_ids,batch_images.shape[0])
+            input_ids = input_ids.tile((batch_images.shape[0],  1))
 
             assert probs.shape[1] == input_ids.shape[1]
             gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
