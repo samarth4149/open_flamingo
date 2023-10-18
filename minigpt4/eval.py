@@ -133,7 +133,7 @@ class MiniGPT4():
         prefix_2nd_token = None
         for class_name in class_names:
             messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
-            sentence = self.create_prompt(system, sep, messages)
+            sentence = self.create_prompt(system, sep, messages)[:-3]
 
             sentence_segs = sentence.split('<ImageHere>')
 
