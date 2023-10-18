@@ -171,7 +171,7 @@ class MiniGPT4():
 
                 prefix_length = prefix_mixed_embs.shape[1]
 
-            assert seg_2nd_token[, : prefix_2nd_token.shape[1]] == prefix_2nd_token
+            assert seg_2nd_token[: , : prefix_2nd_token.shape[1]] == prefix_2nd_token
             # compute the length before the grad_truth location
             with torch.no_grad():
                 outputs = self.model.llama_model(
