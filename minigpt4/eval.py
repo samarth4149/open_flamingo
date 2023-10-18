@@ -163,7 +163,7 @@ class MiniGPT4():
                     # only add bos to the first seg
                     for i, seg in enumerate(prefix_sentence_segs)
                 ]
-                prefix_2nd_token = seg_tokens[1]
+                prefix_2nd_token = prefix_seg_tokens[1]
                 prefix_seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
                 prefix_embs = [self.expand_emb(prefix_seg_embs[0], batch_images.shape[0]), image_emb,
                         self.expand_emb(prefix_seg_embs[1], batch_images.shape[0])]
@@ -171,6 +171,8 @@ class MiniGPT4():
 
                 prefix_length = prefix_mixed_embs.shape[1]
 
+            import pdb
+            pdb.set_trace()
             assert seg_2nd_token[: , : prefix_2nd_token.shape[1]] == prefix_2nd_token
             # compute the length before the grad_truth location
             with torch.no_grad():
