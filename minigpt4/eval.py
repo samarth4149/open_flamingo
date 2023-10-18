@@ -104,27 +104,101 @@ class MiniGPT4():
         embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
         mixed_embs = torch.cat(embs, dim=1)
 
-        # outputs = self.model.llama_model.generate(
-        #     inputs_embeds=mixed_embs,
-        #     max_new_tokens=max_new_tokens,
-        #     stopping_criteria=self.stopping_criteria,
-        #     num_beams=num_beams,
-        #     do_sample=do_sample,
-        #     min_length=min_length,
-        #     top_p=top_p,
-        #     repetition_penalty=repetition_penalty,
-        #     length_penalty=length_penalty,
-        #     temperature=temperature
-        # )
-        with torch.no_grad():
-            outputs = self.model.llama_model(
-                inputs_embeds=mixed_embs,
-            )
-        import pdb
-        pdb.set_trace()
+        outputs = self.model.llama_model.generate(
+            inputs_embeds=mixed_embs,
+            max_new_tokens=max_new_tokens,
+            stopping_criteria=self.stopping_criteria,
+            num_beams=num_beams,
+            do_sample=do_sample,
+            min_length=min_length,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
+            length_penalty=length_penalty,
+            temperature=temperature
+        )
+
         new_predictions = [self.process_output(output) for output in outputs]
 
         return new_predictions
+
+    def get_GPTScore(self, batch_images,
+                    system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
+                    sep = "###", prompt= 'a photo of ', class_names=[],
+                    max_new_tokens=200, num_beams=1, do_sample=True, min_length=1, top_p=0.9, repetition_penalty=1.0,
+                    length_penalty=1, temperature=1.0):
+        batch_images = batch_images.to(self.device)
+        image_emb, _ = self.model.encode_img(batch_images)
+
+        prefix_length = None
+        prefix_2nd_token = None
+        for class_name in class_names:
+            messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
+            sentence = self.create_prompt(system, sep, messages)
+
+            sentence_segs = sentence.split('<ImageHere>')
+
+            seg_tokens = [
+                self.model.llama_tokenizer(
+                    seg, return_tensors="pt", add_special_tokens=i == 0).to(self.device).input_ids
+                # only add bos to the first seg
+                for i, seg in enumerate(sentence_segs)
+            ]
+            #
+            seg_2nd_token = seg_tokens[1]
+
+            seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+            embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
+            mixed_embs = torch.cat(embs, dim=1)
+
+            overall_length = mixed_embs.shape[1]
+            if prefix_length is None or prefix_2nd_token is None:
+                prefix_messages = [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", None)]
+                prefix_sentence = self.create_prompt(system, sep, prefix_messages)
+
+                prefix_sentence_segs = prefix_sentence.split('<ImageHere>')
+
+                prefix_seg_tokens = [
+                    self.model.llama_tokenizer(
+                        seg, return_tensors="pt", add_special_tokens=i == 0).to(self.device).input_ids
+                    # only add bos to the first seg
+                    for i, seg in enumerate(prefix_sentence_segs)
+                ]
+                prefix_2nd_token = seg_tokens[1]
+                prefix_seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+                prefix_embs = [self.expand_emb(prefix_seg_embs[0], batch_images.shape[0]), image_emb,
+                        self.expand_emb(prefix_seg_embs[1], batch_images.shape[0])]
+                prefix_mixed_embs = torch.cat(prefix_embs, dim=1)
+
+                prefix_length = prefix_mixed_embs.shape[1]
+
+            assert seg_2nd_token[: len(prefix_2nd_token)] == prefix_2nd_token
+            # compute the length before the grad_truth location
+            with torch.no_grad():
+                outputs = self.model.llama_model(
+                    inputs_embeds=mixed_embs
+                )
+                probs = torch.log_softmax(outputs.logits, dim=-1).detach()
+
+            import pdb
+            pdb.set_trace()
+            probs = probs[:, :-1, :]
+            probs = probs[:, -(overall_length-prefix_length):, :]
+            input_ids = seg_2nd_token[:, len(prefix_2nd_token):]
+            assert probs.shape[1] == input_ids.shape[1]
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+
+            batch = []
+            for input_sentence, input_probs in zip(input_ids, gen_probs):
+                text_sequence = []
+                for token, p in zip(input_sentence, input_probs):
+                    if token not in self.model.llama_tokenizer.all_special_ids:
+                        text_sequence.append((self.model.llama_tokenizer.decode(token), p.item()))
+                batch.append(text_sequence)
+            import pdb
+            pdb.set_trace()
+
+        return batch
+
 
     def get_prompt_outputs(self, batch_images,
                     system="Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
