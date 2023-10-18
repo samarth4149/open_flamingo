@@ -131,6 +131,7 @@ class MiniGPT4():
 
         prefix_length = None
         prefix_2nd_token = None
+        class_probs = []
         for class_name in class_names:
             messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
             sentence = self.create_prompt(system, sep, messages)[:-3]
@@ -184,22 +185,26 @@ class MiniGPT4():
             probs = probs[:, -(overall_length-prefix_length):, :]
             input_ids = seg_2nd_token[:, prefix_2nd_token.shape[1]:]
             input_ids = input_ids.tile((batch_images.shape[0],  1))
-            import pdb
-            pdb.set_trace()
             assert probs.shape[1] == input_ids.shape[1]
             gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
 
-            batch = []
-            for input_sentence, input_probs in zip(input_ids, gen_probs):
-                text_sequence = []
-                for token, p in zip(input_sentence, input_probs):
-                    if token not in self.model.llama_tokenizer.all_special_ids:
-                        text_sequence.append((self.model.llama_tokenizer.decode(token), p.item()))
-                batch.append(text_sequence)
-            import pdb
-            pdb.set_trace()
+            class_prob = gen_probs.mean(dim=-1)
+            # batch = []
+            # for input_sentence, input_probs in zip(input_ids, gen_probs):
+            #     text_sequence = []
+            #     for token, p in zip(input_sentence, input_probs):
+            #         if token not in self.model.llama_tokenizer.all_special_ids:
+            #             text_sequence.append((self.model.llama_tokenizer.decode(token), p.item()))
+            #     batch.append(text_sequence)
+            # import pdb
+            # pdb.set_trace()
+            class_probs.append(class_prob)
 
-        return batch
+        class_probs = torch.stack(class_probs, dim=-1)
+        import pdb
+        pdb.set_trace()
+
+        return class_probs
 
 
     def get_prompt_outputs(self, batch_images,
