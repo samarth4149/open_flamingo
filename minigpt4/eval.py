@@ -121,9 +121,9 @@ class MiniGPT4():
 
         return new_predictions
 
-    def get_GPTScore(self, batch_images,
+    def get_GPTScore(self, batch_images, class_names,
                     system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
-                    sep = "###", prompt= 'a photo of ', class_names=[],
+                    sep = "###", prompt= 'a photo of ',
                     max_new_tokens=200, num_beams=1, do_sample=True, min_length=1, top_p=0.9, repetition_penalty=1.0,
                     length_penalty=1, temperature=1.0):
         batch_images = batch_images.to(self.device)
