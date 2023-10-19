@@ -318,8 +318,8 @@ def evaluate_captioning(
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         if args.model in ['minigpt4', 'llava']:
-            # outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
-            outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
+            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
+            # outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
         else:
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,

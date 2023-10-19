@@ -192,8 +192,6 @@ class MiniGPT4():
             class_probs.append(class_prob)
 
         class_probs = torch.stack(class_probs, dim=-1)
-        import pdb
-        pdb.set_trace()
 
         return class_probs
 

@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, 'open_flamingo/')
+sys.path.insert(0, './')
 
 import argparse
 import importlib
@@ -12,7 +12,6 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score
 import sng_parser
 import spacy
-import more_itertools
 
 from copy import deepcopy
 
@@ -319,7 +318,7 @@ def evaluate_captioning(
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         if args.model in ['minigpt4', 'llava']:
-            outputs = eval_model.get_outputs(batch_images=batch_images, prompt=prompt)
+            outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
         else:
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
@@ -329,66 +328,25 @@ def evaluate_captioning(
                 length_penalty=length_penalty,
             )
 
-        if args.model == 'open_flamingo':
-            new_predictions = [
-                postprocess_captioning_generation(out, split_words=['.', '\n', prompt, prompt.capitalize()]).replace('"', "") for out in outputs
-            ]
-        else:
-            new_predictions = outputs
 
-        pred_words = []
-        for pred in new_predictions:
-            pred_graph = sng_parser.parse(pred)
-            pred_entities = pred_graph['entities']
-            # prediction = pred
-            words = []
-            for entity in pred_entities:
-                # prediction.replace(entity['span'],  entity['lemma_span'])
-                words.append(entity['lemma_span'])
-            pred_words.append(words)
-
-
-        # Generate predictions from captions
-        predictions = np.zeros((len(new_predictions), len(class_names)), dtype=np.int32)
-        for b_idx, words in enumerate(pred_words):
-            for word in words:
-                match_synonyms = []
-                for c_idx, class_synonym in enumerate(class_synonyms):
-                    for synonym in class_synonym:
-                        if synonym in word:
-                            match_synonyms.append((c_idx, synonym))
-                best_score = 0
-                best_c_idx = None
-                for match_synonym in match_synonyms:
-                    idx, synonym = match_synonym
-                    score = similarity(nlp, word, synonym)
-                    if score > best_score:
-                        best_score = score
-                        best_c_idx = idx
-
-                if best_c_idx is not None:
-                    # predictions[b_idx, best_c_idx] = best_score
-                    predictions[b_idx, best_c_idx] = 1
-                    # import pdb
-                    # pdb.set_trace()
 
         # compute mAP with the ground truth label
         targets.append(batch_target)
-        preds.append(predictions)
+        preds.append(outputs)
 
         # generate triplets for visualization
         # # Example usage:
-        visual_path = '/Users/sunxm/Documents/research/datasets/mscoco_2014/val2014'
-        for path, caption, prediction, target in zip(batch_path, new_predictions, predictions, batch_target):
-            # image_path
-            image_path = os.path.join(visual_path, path)
-            # predict list
-            pred_classes = class_names_np[prediction == 1]
-            # ground-truth label list
-            target_np = target.cpu().numpy()
-            gt_classes = class_names_np[target_np == 1]
-            triplet = (image_path, caption, pred_classes, gt_classes)
-            triplets.append(triplet)
+        # visual_path = '/Users/sunxm/Documents/research/datasets/mscoco_2014/val2014'
+        # for path, caption, prediction, target in zip(batch_path, new_predictions, predictions, batch_target):
+        #     # image_path
+        #     image_path = os.path.join(visual_path, path)
+        #     # predict list
+        #     pred_classes = class_names_np[prediction == 1]
+        #     # ground-truth label list
+        #     target_np = target.cpu().numpy()
+        #     gt_classes = class_names_np[target_np == 1]
+        #     triplet = (image_path, caption, pred_classes, gt_classes)
+        #     triplets.append(triplet)
 
 
     # compute mAP with the ground truth label
@@ -396,211 +354,16 @@ def evaluate_captioning(
     targets = torch.cat(targets, dim=0)
     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds)
     print('mAP is %0.2f' % mAP)
-
-    # visualize the prediction
-    html = create_html_page(triplets)
-
-    # write the html string to a file
-    html_folder = 'html'
-    if not os.path.isdir(html_folder):
-        os.makedirs(html_folder)
-    with open(os.path.join(html_folder, '%s_%s_%s.html' % (dataset_name, args.model, args.coco_prompts)), 'w') as f:
-        f.write(html)
-
-
-def evaluate_image_cls(
-    args: argparse.Namespace,
-    eval_model,
-    batch_size: int,
-    seed: int = 42,
-    image_cls_part: int = None,
-    dataset_name: str = "coco",
-):
-    """
-    Evaluate a model on Image dataset.
-
-    Args:
-        eval_model (BaseEvalModel): model to evaluate
-        batch_size (int): batch size
-        imagenet_root (str): path to imagenet root for the specified split.
-        seed (int, optional): random seed. Defaults to 42.
-        num_samples (int, optional): number of samples to evaluate on. Defaults to 5000 samples.
-        num_shots (int, optional): number of shots to use. Defaults to 8.
-
-    Returns:
-        float: accuracy score
-    """
-    if not hasattr(eval_model, "model") or not hasattr(eval_model, "tokenizer"):
-        raise NotImplementedError(
-            "evaluate_imagenet is currently only supported for OpenFlamingo " "models"
-        )
-    np.random.seed(seed)
-    tokenizer = eval_model.tokenizer
-
-    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
-        # build test dataset
-        if dataset_name == 'coco':
-            dataset_func = CocoDetection
-            data_split = 'val2014'
-        elif dataset_name == 'pascal_voc':
-            dataset_func = voc2007
-            data_split = 'test'
-        elif dataset_name == 'OpenImagesV6Common':
-            dataset_func = OpenImagesCommon
-            data_split = 'test'
-        elif args.dataset_name == 'OpenImagesV6Rare':
-            dataset_func = OpenImagesRare
-            data_split = 'test'
-        elif args.dataset_name == 'ADE20k':
-            dataset_func = ADE20k
-            data_split = 'validation'
-        else:
-            raise ValueError
-
-        if args.model == 'open_flamingo':
-            test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
-            )
-        elif args.model == 'blip':
-            test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor
-            )
-        elif args.model == 'minigpt4':
-            test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor
-            )
-        elif args.model == 'llava':
-            test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
-            )
-        else:
-            raise ValueError(f'model {args.model} is not supported')
-    else:
-        raise ValueError('Dataset %s is not supported' % dataset_name)
-
-    tokenizer.padding_side = (
-        "left"  # For generation padding tokens should be on the left
-    )
-
-    acc1 = 0
-    acc5 = 0
-    prompt_text = "<image>A photo of "
-
-    test_iterator = more_itertools.chunked(test_dataset, batch_size)
-    for batch_idx, batch in enumerate(test_iterator):
-        vision_x = batch
-
-        eval_model._encode_vision_x(vision_x.cuda())
-
-        # Cache the context text: tokenize context and prompt,
-        # e.g. '<context> a picture of a '
-        ctx_and_prompt_tokenized = tokenizer(
-            [context_text + prompt_text + " " for context_text in batch_text],
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=2048,
-        )
-
-        with torch.no_grad():
-            precomputed = model(
-                vision_x=None,
-                lang_x=ctx_and_prompt_tokenized["input_ids"].cuda(),
-                attention_mask=ctx_and_prompt_tokenized["attention_mask"].cuda(),
-                clear_conditioned_layers=False,
-                use_cached_vision_x=True,
-                use_cache=True,
-            )
-
-        def _detach_pkvs(pkvs):
-            """Detach a set of past key values."""
-            return tuple([tuple([x.detach() for x in inner]) for inner in pkvs])
-
-        precomputed_pkvs = _detach_pkvs(precomputed.past_key_values)
-
-        precomputed_logits = precomputed.logits.detach()
-
-        overall_probs = []
-        for image_cls_class_name in tqdm(class_map[image_cls_dataset_name]):
-            past_key_values = None
-            # Tokenize only the class name and iteratively decode the model's
-            # predictions for this class.
-            classname_tokens = tokenizer(image_cls_class_name, add_special_tokens=False, return_tensors="pt")["input_ids"].cuda()
-
-            if classname_tokens.ndim == 1:  # Case: classname is only 1 token
-                classname_tokens = torch.unsqueeze(classname_tokens, 1)
-
-            classname_tokens = repeat(classname_tokens, "b s -> (repeat b) s", repeat=vision_x.shape[0])
-
-            # Compute the outputs one token at a time, using cached
-            # activations.
-
-            # Initialize the elementwise predictions with the last set of
-            # logits from precomputed; this will correspond to the predicted
-            # probability of the first position/token in the imagenet
-            # classname. We will append the logits for each token to this
-            # list (each element has shape [B, 1, vocab_size]).
-            elementwise_logits = [precomputed_logits[:, -2:-1, :]]
-
-            for token_idx in range(classname_tokens.shape[1]):
-                _lang_x = classname_tokens[:, token_idx].reshape((-1, 1))
-                with torch.no_grad():
-                    outputs = model(
-                        vision_x=None,
-                        lang_x=_lang_x,
-                        clear_conditioned_layers=False,
-                        use_cached_vision_x=True,
-                        past_key_values=(
-                            past_key_values if token_idx > 0 else precomputed_pkvs
-                        ),
-                        use_cache=True,
-                    )
-                past_key_values = _detach_pkvs(outputs.past_key_values)
-                elementwise_logits.append(outputs.logits.detach())
-
-            # logits/probs has shape [B, classname_tokens + 1, vocab_size]
-            logits = torch.concat(elementwise_logits, 1)
-            probs = torch.softmax(logits, dim=-1).detach()
-            # collect the probability of the generated token -- probability
-            # at index 0 corresponds to the token at index 1.
-            probs = probs[:, :-1, :]  # shape [B, classname_tokens, vocab_size]
-
-            gen_probs = torch.gather(probs, 2, classname_tokens[:, :, None]).squeeze(-1)
-
-            class_prob = torch.sum(torch.log(gen_probs), 1).detach().cpu().numpy()
-            overall_probs.append(class_prob/classname_tokens.shape[1])
-
-        overall_probs = np.row_stack(overall_probs).T  # shape [B, num_classes]
-
-        def topk(probs_ary: np.ndarray, k: int) -> np.ndarray:
-            """Return the indices of the top k elements in probs_ary."""
-            return np.argsort(probs_ary)[::-1][:k]
-
-        for i in range(vision_x.shape[0]):
-            top5 = [
-                class_map_cls_id_to_class[image_cls_dataset_name][pred]
-                for pred in topk(overall_probs[i], 5)
-            ]
-
-            y_i = batch[i]["class_name"]
-            acc5 += int(y_i in set(top5))
-            acc1 += int(y_i == top5[0])
-
-            print(
-                f"DEBUG: batch {batch_idx} elem {i} of {vision_x.shape[0]}:"
-                f"label {y_i} // top5 {top5}"
-            )
-
-        examples_seen = batch_idx * batch_size + vision_x.shape[0]
-        print(
-            "eval {}/{}: acc@1 ({}), acc@5 ({})".format(
-                examples_seen, num_samples, acc1 / examples_seen, acc5 / examples_seen
-            )
-        )
-        if examples_seen >= num_samples:
-            break
-
-    return float(acc1) / num_samples
+    #
+    # # visualize the prediction
+    # html = create_html_page(triplets)
+    #
+    # # write the html string to a file
+    # html_folder = 'html'
+    # if not os.path.isdir(html_folder):
+    #     os.makedirs(html_folder)
+    # with open(os.path.join(html_folder, '%s_%s_%s.html' % (dataset_name, args.model, args.coco_prompts)), 'w') as f:
+    #     f.write(html)
 
 
 
