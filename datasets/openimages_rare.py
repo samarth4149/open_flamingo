@@ -23,7 +23,7 @@ def read_labels(path_labels):
 
 
 class OpenImagesRare(data.Dataset):
-    def __init__(self, root, data_split, transform=None, start_idx=0):
+    def __init__(self, root, data_split, transform=None, start_idx=0, **kwargs):
         # data_split = train / val
         self.root = root
         classnames = []

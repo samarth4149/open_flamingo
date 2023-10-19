@@ -23,7 +23,7 @@ def read_labels(path_labels):
 
 
 class voc2007(data.Dataset):
-    def __init__(self, root, data_split, transform, start_idx=0):
+    def __init__(self, root, data_split, transform, start_idx=0, **kwargs):
         # data_split = train / val
         self.root = root
         self.classnames = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow',

@@ -29,6 +29,8 @@ from datasets.pascal_voc import voc2007
 from datasets.openimages_common import OpenImagesCommon
 from datasets.openimages_rare import OpenImagesRare
 from datasets.ade20k import ADE20k
+from datasets.image_datasets import ImageDataset
+from datasets.elevater_utils import image_cls_val_splits
 import pickle
 
 parser = argparse.ArgumentParser()
@@ -243,7 +245,6 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
-    nlp = spacy.load("en_core_web_md")
     if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
         # build test dataset
         if dataset_name == 'coco':
@@ -262,23 +263,25 @@ def evaluate_captioning(
             dataset_func = ADE20k
             data_split = 'validation'
         else:
-            raise ValueError
+            # image classification datasets
+            dataset_func = ImageDataset
+            data_split = image_cls_val_splits[args.dataset_name]
 
         if args.model == 'open_flamingo':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor, dataset_name=args.dataset_name
             )
         elif args.model == 'blip':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor, dataset_name=args.dataset_name
             )
         elif args.model == 'minigpt4':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor, dataset_name=args.dataset_name
             )
         elif args.model == 'llava':
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor
+                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor, dataset_name=args.dataset_name
             )
         else:
             raise ValueError(f'model {args.model} is not supported')
