@@ -129,11 +129,8 @@ def main():
         module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
         eval_model = module.EvalModel(model_args)
 
-    if args.vqa:
-        evaluate_vqa(args, eval_model=eval_model, dataset_name=args.dataset_name)
 
-    else:
-        evaluate_captioning(args, eval_model=eval_model, dataset_name=args.dataset_name)
+    evaluate_captioning(args, eval_model=eval_model, dataset_name=args.dataset_name)
 
 
 def get_random_indices(num_samples, query_set_size, full_dataset, seed):
@@ -290,7 +287,6 @@ def evaluate_captioning(
 
     class_synonyms = []
     class_names = test_dataset.classnames
-    class_names_np = np.array(class_names)
     for class_name in class_names:
         synonyms = set()
         _class_names = class_name.split(',')
@@ -306,6 +302,7 @@ def evaluate_captioning(
 
     targets = []
     preds = []
+    count = 0
     for batch in tqdm(iter(test_dataloader)):
         batch_images, batch_target, batch_path = batch
         batch_target = batch_target.max(dim=1)[0]
@@ -327,43 +324,18 @@ def evaluate_captioning(
                 length_penalty=length_penalty,
             )
 
-
-
         # compute mAP with the ground truth label
         targets.append(batch_target)
         preds.append(outputs)
-        # generate triplets for visualization
-        # # Example usage:
-        # visual_path = '/Users/sunxm/Documents/research/datasets/mscoco_2014/val2014'
-        # for path, caption, prediction, target in zip(batch_path, new_predictions, predictions, batch_target):
-        #     # image_path
-        #     image_path = os.path.join(visual_path, path)
-        #     # predict list
-        #     pred_classes = class_names_np[prediction == 1]
-        #     # ground-truth label list
-        #     target_np = target.cpu().numpy()
-        #     gt_classes = class_names_np[target_np == 1]
-        #     triplet = (image_path, caption, pred_classes, gt_classes)
-        #     triplets.append(triplet)
-
+        count += 1
+        if count>10:
+            break
 
     # compute mAP with the ground truth label
-    preds = torch.cat(preds, dim=0)
+    preds = torch.exp(torch.cat(preds, dim=0))
     targets = torch.cat(targets, dim=0)
     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
     print('mAP is %0.2f' % mAP)
-    #
-    # # visualize the prediction
-    # html = create_html_page(triplets)
-    #
-    # # write the html string to a file
-    # html_folder = 'html'
-    # if not os.path.isdir(html_folder):
-    #     os.makedirs(html_folder)
-    # with open(os.path.join(html_folder, '%s_%s_%s.html' % (dataset_name, args.model, args.coco_prompts)), 'w') as f:
-    #     f.write(html)
-
-
 
 
 if __name__ == "__main__":
