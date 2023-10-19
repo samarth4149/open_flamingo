@@ -328,8 +328,8 @@ def evaluate_captioning(
         targets.append(batch_target)
         preds.append(outputs)
         count += 1
-        if count>10:
-            break
+        # if count>10:
+        #     break
 
     # compute mAP with the ground truth label
     preds = torch.exp(torch.cat(preds, dim=0))
