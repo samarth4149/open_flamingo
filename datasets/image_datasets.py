@@ -22,7 +22,7 @@ class ImageDataset(ImageFolder):
 
     def __getitem__(self, idx):
         sample, target = super().__getitem__(idx)
-        target_label = self.cls_id_to_class[self.dataset_name][target+self.offset]
+        target_label = self.cls_id_to_class[target+self.offset]
         return {
             "image": sample,
             "class_id": target,  # numeric ID of the ImageNet class
