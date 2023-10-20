@@ -18,7 +18,7 @@ class ImageDataset(ImageFolder):
             self.cls_id_to_class = IMAGENET_1K_CLASS_ID_TO_LABEL
         else:
             self.classnames = class_names[dataset_name]
-            self.cls_id_to_class = class_map_cls_id_to_class
+            self.cls_id_to_class = class_map_cls_id_to_class[dataset_name]
 
     def __getitem__(self, idx):
         sample, target = super().__getitem__(idx)
