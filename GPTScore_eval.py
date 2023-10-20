@@ -322,9 +322,12 @@ def evaluate_captioning(
     preds = []
     count = 0
     for batch in tqdm(iter(test_dataloader)):
-        batch_images, batch_target, batch_path = batch
         if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
+            batch_images, batch_target, batch_path = batch
             batch_target = batch_target.max(dim=1)[0]
+        else:
+            batch_images = batch['image']
+            batch_target = batch['class_id']
 
         if args.model == 'open_flamingo':
             batch_images = batch_images.unsqueeze(1).unsqueeze(1)
