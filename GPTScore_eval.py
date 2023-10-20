@@ -348,14 +348,12 @@ def evaluate_captioning(
         targets.append(batch_target)
         preds.append(outputs)
         count += 1
-        if count> 1:
-            break
+        # if count> 1:
+        #     break
 
-    import pdb
-    pdb.set_trace()
 
     # compute mAP with the ground truth label
-    preds = torch.exp(torch.cat(preds, dim=0))
+    preds = torch.exp(torch.cat(preds, dim=0)).float()
     targets = torch.cat(targets, dim=0)
     if args.dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
         mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
