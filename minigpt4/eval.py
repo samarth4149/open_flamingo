@@ -130,6 +130,7 @@ class MiniGPT4():
         prefix_length = None
         prefix_2nd_token = None
         class_probs = []
+        prefix_outputs = None
         for class_name in class_names:
             messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
             sentence = self.create_prompt(system, sep, messages)[:-3]
@@ -150,7 +151,7 @@ class MiniGPT4():
             mixed_embs = torch.cat(embs, dim=1)
 
             overall_length = mixed_embs.shape[1]
-            if prefix_length is None or prefix_2nd_token is None:
+            if prefix_length is None or prefix_2nd_token is None or prefix_outputs is None:
                 prefix_messages = [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", None)]
                 prefix_sentence = self.create_prompt(system, sep, prefix_messages)
 
@@ -169,16 +170,20 @@ class MiniGPT4():
                 prefix_mixed_embs = torch.cat(prefix_embs, dim=1)
 
                 prefix_length = prefix_mixed_embs.shape[1]
+                prefix_outputs = self.model.llama_model(
+                    inputs_embeds=prefix_mixed_embs, use_cache=True
+                )
 
             assert torch.all(torch.eq(seg_2nd_token[: , : prefix_2nd_token.shape[1]], prefix_2nd_token))
             # compute the length before the grad_truth location
             with torch.no_grad():
                 outputs = self.model.llama_model(
-                    inputs_embeds=mixed_embs
+                    inputs_embeds=mixed_embs[:, prefix_length:], past_key_values=prefix_outputs.past_key_values
                 )
                 import pdb
                 pdb.set_trace()
-                probs = torch.log_softmax(outputs.logits, dim=-1).detach()
+                outputs_logits = torch.cat([prefix_outputs.logits, outputs.logits], dim=1)
+                probs = torch.log_softmax(outputs_logits, dim=-1).detach()
 
 
             probs = probs[:, :-1, :]
