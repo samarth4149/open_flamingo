@@ -171,6 +171,21 @@ def compute_map(y_true, y_pred):
     mAP = np.mean(APs)
     return mAP
 
+
+def top_k_accuracy(pred, targets, k=1):
+    # Get the top k indices of the predictions
+    top_k_preds = torch.topk(pred, k, dim=1)[1]  # [n, k]
+
+    # Expand targets to [n, k] for comparison
+    targets = targets.view(-1, 1).expand_as(top_k_preds)
+
+    # Check if targets are in top k predictions
+    import pdb
+    pdb.set_trace()
+    correct = torch.any(top_k_preds == targets, dim=1).float().sum()
+
+    return (correct / len(targets)).cpu().item()
+
 def get_query_set(train_dataset, query_set_size, seed):
     np.random.seed(seed)
     query_set = np.random.choice(len(train_dataset), query_set_size, replace=False)
@@ -339,9 +354,13 @@ def evaluate_captioning(
     # compute mAP with the ground truth label
     preds = torch.exp(torch.cat(preds, dim=0))
     targets = torch.cat(targets, dim=0)
-    if args.dataset_name
-    mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
-    print('mAP is %0.2f' % mAP)
+    if args.dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
+        mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
+        print('mAP is %0.2f' % mAP)
+    else:
+        acc = top_k_accuracy(preds, targets, k=1)
+        print('Top-1 is %0.2f' % acc)
+
 
 
 if __name__ == "__main__":
