@@ -364,7 +364,7 @@ def evaluate_captioning(
         mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
         print('mAP is %0.2f' % mAP)
     else:
-        acc = top_k_accuracy(preds, targets, k=1)
+        acc = top_k_accuracy(preds.cpu(), targets, k=1)
         print('Top-1 is %0.2f' % acc)
 
 
