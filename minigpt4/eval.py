@@ -178,6 +178,8 @@ class MiniGPT4():
                 outputs = self.model.llama_model(
                     inputs_embeds=mixed_embs
                 )
+                import pdb
+                pdb.set_trace()
                 probs = torch.log_softmax(outputs.logits, dim=-1).detach()
 
 
