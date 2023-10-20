@@ -170,9 +170,10 @@ class MiniGPT4():
                 prefix_mixed_embs = torch.cat(prefix_embs, dim=1)
 
                 prefix_length = prefix_mixed_embs.shape[1]
-                prefix_outputs = self.model.llama_model(
-                    inputs_embeds=prefix_mixed_embs, use_cache=True
-                )
+                with torch.no_grad():
+                    prefix_outputs = self.model.llama_model(
+                        inputs_embeds=prefix_mixed_embs, use_cache=True
+                    )
 
             assert torch.all(torch.eq(seg_2nd_token[: , : prefix_2nd_token.shape[1]], prefix_2nd_token))
             # compute the length before the grad_truth location
