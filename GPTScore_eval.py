@@ -245,7 +245,7 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
-    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
+    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k", 'imagenet-1k']:
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection
@@ -339,6 +339,7 @@ def evaluate_captioning(
     # compute mAP with the ground truth label
     preds = torch.exp(torch.cat(preds, dim=0))
     targets = torch.cat(targets, dim=0)
+    if args.dataset_name
     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
     print('mAP is %0.2f' % mAP)
 
