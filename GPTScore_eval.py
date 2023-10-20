@@ -180,8 +180,6 @@ def top_k_accuracy(pred, targets, k=1):
     targets = targets.view(-1, 1).expand_as(top_k_preds)
 
     # Check if targets are in top k predictions
-    import pdb
-    pdb.set_trace()
     correct = torch.any(top_k_preds == targets, dim=1).float().sum()
 
     return (correct / len(targets)).cpu().item()
@@ -322,8 +320,6 @@ def evaluate_captioning(
     preds = []
     count = 0
     for batch in tqdm(iter(test_dataloader)):
-        import pdb
-        pdb.set_trace()
         if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
             batch_images, batch_target, batch_path = batch
             batch_target = batch_target.max(dim=1)[0]
@@ -352,11 +348,9 @@ def evaluate_captioning(
         targets.append(batch_target)
         preds.append(outputs)
         count += 1
-        if count> 1:
-            break
+        # if count> 1:
+        #     break
 
-    import pdb
-    pdb.set_trace()
     # compute mAP with the ground truth label
     preds = torch.exp(torch.cat(preds, dim=0))
     targets = torch.cat(targets, dim=0)
