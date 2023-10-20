@@ -260,7 +260,7 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
-    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k", 'imagenet-1k']:
+    if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k", 'imagenet-1k', 'cifar-10']:
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection

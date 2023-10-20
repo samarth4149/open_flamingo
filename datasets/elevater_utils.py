@@ -3409,7 +3409,7 @@ template_map = {
 image_cls_val_splits = {
                         'birdsnap':  birdsnap_classes,
                         'gtsrb': gtsrb_classes,
-                        'cifar-10': cifar10_classes,
+                        'cifar-10': 'val',
                         'caltech-101': caltech101_classes,
                         'cifar-100': cifar100_classes,
                         'country211': country211_classes,
