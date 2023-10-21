@@ -301,19 +301,7 @@ def evaluate_captioning(
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
-    class_synonyms = []
-    class_names = test_dataset.classnames
-    for class_name in class_names:
-        synonyms = set()
-        _class_names = class_name.split(',')
-        for _class_name in _class_names:
-            _class_name = _class_name.strip()
-            synonyms.add(_class_name.replace('_', ' '))
-            for syn in wordnet.synsets(_class_name):
-                for l in syn.lemmas():
-                    synonyms.add(l.name().replace('_', ' '))
-        class_synonyms.append(list(synonyms))
-
+    class_names = test_dataset.classes
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
     targets = []
@@ -348,9 +336,11 @@ def evaluate_captioning(
         targets.append(batch_target)
         preds.append(outputs)
         count += 1
-        # if count >= 1:
-        #     break
+        if count >= 1:
+            break
 
+    import pdb
+    pdb.set_trace()
     # compute mAP with the ground truth label
     preds = torch.exp(torch.cat(preds, dim=0)).float()
     targets = torch.cat(targets, dim=0)
