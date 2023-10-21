@@ -136,7 +136,7 @@ class MiniGPT4():
         prefix_2nd_token = None
         class_probs = []
         prefix_outputs = None
-        class_names = ['tench', 'sink']
+        # class_names = ['tench', 'sink']
         for class_name in class_names:
             messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
             sentence = self.create_prompt(system, sep, messages)[:-3]
@@ -192,8 +192,6 @@ class MiniGPT4():
                 outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
                 probs = torch.log_softmax(outputs_logits, dim=-1).detach()
 
-            import pdb
-            pdb.set_trace()
             probs = probs[:, :-1, :]
             probs = probs[:, -(overall_length-prefix_length):, :]
             input_ids = seg_2nd_token[:, prefix_2nd_token.shape[1]:]
