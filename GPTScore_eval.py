@@ -350,6 +350,7 @@ def evaluate_captioning(
         count += 1
         if count >= 1:
             break
+
     import pdb
     pdb.set_trace()
     # compute mAP with the ground truth label
