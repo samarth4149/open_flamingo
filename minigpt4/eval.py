@@ -184,7 +184,8 @@ class MiniGPT4():
                 outputs_logits = torch.cat([prefix_outputs.logits, outputs.logits], dim=1)
                 probs = torch.log_softmax(outputs_logits, dim=-1).detach()
 
-
+            import pdb
+            pdb.set_trace()
             probs = probs[:, :-1, :]
             probs = probs[:, -(overall_length-prefix_length):, :]
             input_ids = seg_2nd_token[:, prefix_2nd_token.shape[1]:]
