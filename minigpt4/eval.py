@@ -35,6 +35,11 @@ class StoppingCriteriaSub(StoppingCriteria):
 
         return False
 
+def _detach_pkvs(pkvs):
+    """Detach a set of past key values."""
+    return tuple([tuple([x.detach() for x in inner]) for inner in pkvs])
+
+
 
 class MiniGPT4():
     def __init__(self, model_config, vis_processor_cfg, gpu_id, learnable_prompt=0):
@@ -131,6 +136,7 @@ class MiniGPT4():
         prefix_2nd_token = None
         class_probs = []
         prefix_outputs = None
+        class_names = ['tench', 'sink']
         for class_name in class_names:
             messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
             sentence = self.create_prompt(system, sep, messages)[:-3]
@@ -174,14 +180,16 @@ class MiniGPT4():
                     prefix_outputs = self.model.llama_model(
                         inputs_embeds=prefix_mixed_embs, use_cache=True
                     )
+                    precomputed_pkvs = _detach_pkvs(prefix_outputs.past_key_values)
 
+                    prefix_output_logits = prefix_outputs.logits.detach()
             assert torch.all(torch.eq(seg_2nd_token[: , : prefix_2nd_token.shape[1]], prefix_2nd_token))
             # compute the length before the grad_truth location
             with torch.no_grad():
                 outputs = self.model.llama_model(
-                    inputs_embeds=mixed_embs[:, prefix_length:], past_key_values=prefix_outputs.past_key_values
+                    inputs_embeds=mixed_embs[:, prefix_length:], past_key_values=precomputed_pkvs
                 )
-                outputs_logits = torch.cat([prefix_outputs.logits, outputs.logits], dim=1)
+                outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
                 probs = torch.log_softmax(outputs_logits, dim=-1).detach()
 
             import pdb
