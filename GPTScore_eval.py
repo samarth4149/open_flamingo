@@ -301,7 +301,7 @@ def evaluate_captioning(
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
-    class_names = test_dataset.classes
+    class_names = test_dataset.classnames
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
     targets = []
