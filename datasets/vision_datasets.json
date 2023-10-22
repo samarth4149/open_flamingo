@@ -35,7 +35,7 @@
     "version": 1,
     "type": "classification_multiclass",
     "description": "The German Traffic Sign Recognition Benchmark (GTSRB) is a multi-class image classification benchmark in the domain of advanced driver assistance systems and autonomous driving. It was first published at IJCNN 2011.",
-    "root_folder": "classification/gtsrb_20210923",
+    "root_folder": "gtsrb_20210923",
     "train": {
       "index_path": "train.txt",
       "files_for_local_usage": [
@@ -65,7 +65,7 @@
     "version": 1,
     "type": "classification_multiclass",
     "description": "Country211 is an internal OpenAI dataset designed to assess the geolocation capability of visual representations. It filters the YFCC100m dataset (Thomee et al., 2016) to find 211 countries (defined as having an ISO-3166 country code) that have at least 300 photos with GPS coordinates. OpenAI built a balanced dataset with 211 categories, by sampling 200 photos for training and 100 photos for testing, for each country.",
-    "root_folder": "classification/country211_20210924",
+    "root_folder": "country211_20210924",
     "train": {
       "index_path": "train.txt",
       "files_for_local_usage": [
@@ -95,7 +95,7 @@
     "version": 1,
     "type": "classification_multiclass",
     "description": "Dataset is from CLIP: The Rendered SST2 dataset is designed to measure the optical character recognition capability of visual representations. To do so, we used the sentences from the Stanford Sentiment Treebank dataset (Socher et al., 2013) and rendered them into images, with black texts on a white background, in a 448×448 resolution.",
-    "root_folder": "classification/rendered_sst2_20210924",
+    "root_folder": "rendered_sst2_20210924",
     "train": {
       "index_path": "train.txt",
       "files_for_local_usage": [
@@ -126,7 +126,7 @@
     "type": "classification_multiclass",
     "description": "The kitti-distance dataset was taken from the VTAB benchmark, and the task was to predict how distant a vehicle is in the photo. More details: https://github.com/openai/CLIP/issues/86",
     "format": "coco",
-    "root_folder": "classification/kitti_distance_20210923",
+    "root_folder": "kitti_distance_20210923",
     "train": {
       "index_path": "train_meta.json",
       "files_for_local_usage": [
@@ -155,7 +155,7 @@
     "version": 1,
     "type": "classification_multiclass",
     "description": "Dataset sampled by CLIP from Eurosat (EuroSAT dataset is based on Sentinel-2 satellite images covering 13 spectral bands and consisting of 10 classes with 27000 labeled and geo-referenced samples.), see: https://github.com/openai/CLIP/issues/45 ",
-    "root_folder": "classification/eurosat_clip_20210930",
+    "root_folder": "eurosat_clip_20210930",
     "train": {
       "index_path": "train.txt",
       "files_for_local_usage": [
@@ -186,7 +186,7 @@
     "type": "classification_multiclass",
     "description": "Dataset sampled by CLIP, see: https://github.com/openai/CLIP/issues/45. RESISC45 dataset is a publicly available benchmark for Remote Sensing Image Scene Classification",
     "format": "coco",
-    "root_folder": "classification/resisc45_clip_20210924",
+    "root_folder": "resisc45_clip_20210924",
     "train": {
       "index_path": "train.json",
       "files_for_local_usage": [
@@ -216,7 +216,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/caltech_101_20211007",
+    "root_folder": "caltech_101_20211007",
     "labelmap": "labels.txt",
     "num_classes": 102,
     "train": {
@@ -240,7 +240,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/cifar_10_20211007",
+    "root_folder": "cifar_10_20211007",
     "labelmap": "labels.txt",
     "num_classes": 10,
     "train": {
@@ -264,7 +264,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/cifar100_20200721",
+    "root_folder": "cifar100_20200721",
     "labelmap": "labels.txt",
     "num_classes": 100,
     "train": {
@@ -288,7 +288,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/dtd_20211007",
+    "root_folder": "dtd_20211007",
     "labelmap": "labels.txt",
     "num_classes": 47,
     "train": {
@@ -319,7 +319,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/fgvc_aircraft_2013b_variants102_20211007",
+    "root_folder": "fgvc_aircraft_2013b_variants102_20211007",
     "labelmap": "labels.txt",
     "num_classes": 100,
     "train": {
@@ -350,7 +350,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/food_101_20211007",
+    "root_folder": "food_101_20211007",
     "labelmap": "labels.txt",
     "num_classes": 101,
     "train": {
@@ -374,7 +374,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/mnist_20211008",
+    "root_folder": "mnist_20211008",
     "labelmap": "labels.txt",
     "num_classes": 10,
     "train": {
@@ -398,7 +398,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/oxford_flower_102_20211007",
+    "root_folder": "oxford_flower_102_20211007",
     "labelmap": "labels.txt",
     "num_classes": 102,
     "train": {
@@ -429,7 +429,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/oxford_iiit_pets_20211007",
+    "root_folder": "oxford_iiit_pets_20211007",
     "labelmap": "labels.txt",
     "num_classes": 37,
     "train": {
@@ -453,7 +453,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/patch_camelyon_20211007",
+    "root_folder": "patch_camelyon_20211007",
     "labelmap": "labels.txt",
     "num_classes": 2,
     "train": {
@@ -484,7 +484,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/stanford_cars_20211007",
+    "root_folder": "stanford_cars_20211007",
     "labelmap": "labels.txt",
     "num_classes": 196,
     "train": {
@@ -508,7 +508,7 @@
     "contact": "pinjin",
     "version": 1,
     "type": "classification_multiclass",
-    "root_folder": "classification/fer_2013_20211008",
+    "root_folder": "fer_2013_20211008",
     "labelmap": "labels.txt",
     "num_classes": 7,
     "train": {
@@ -539,7 +539,7 @@
     "type": "classification_multiclass",
     "description": "At the massive scale of the internet, the task of detecting multimodal hate is both extremely important and particularly difficult. Relying on just text or just images to determine whether a meme is hateful is insufficient. By using certain types of images, text, or combinations, a meme can become a multimodal type of hate speech.",
     "format": "coco",
-    "root_folder": "classification/hateful_memes_20211014",
+    "root_folder": "hateful_memes_20211014",
     "train": {
       "index_path": "train_meta.json",
       "files_for_local_usage": [
@@ -561,7 +561,7 @@
     "version": 1,
     "description": "imagenet 1k dataset (test only). Copy from Chunyuan's team",
     "type": "classification_multiclass",
-    "root_folder": "classification/imagenet_1k_20220105",
+    "root_folder": "imagenet_1k_20220105",
     "format": "coco",
     "train": {
       "index_path": "train.json",
