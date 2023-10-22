@@ -42,6 +42,6 @@ if __name__ == '__main__':
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-    dataset = image_dataset('/projectnb/ivc-ml/sunxm/datasets', 'imagenet-1k', transform)
+    dataset = image_dataset('/projectnb/ivc-ml/sunxm/datasets', 'cifar-10', transform)
     import pdb
     pdb.set_trace()
