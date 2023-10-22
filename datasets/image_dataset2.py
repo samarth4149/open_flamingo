@@ -5,9 +5,11 @@ import pathlib
 from vision_datasets import Usages
 from torchvision import transforms
 from PIL import Image
-from datasets.imagenet_utils import openai_imagenet_classnames
-from datasets.elevater_utils import class_names
+# from datasets.imagenet_utils import openai_imagenet_classnames
+# from datasets.elevater_utils import class_names
 
+from imagenet_utils import openai_imagenet_classnames
+from elevater_utils import class_names
 
 VISION_DATASET_STORAGE = 'https://cvinthewildeus.blob.core.windows.net/datasets'
 
