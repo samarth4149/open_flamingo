@@ -30,6 +30,7 @@ from datasets.openimages_common import OpenImagesCommon
 from datasets.openimages_rare import OpenImagesRare
 from datasets.ade20k import ADE20k
 from datasets.image_datasets import ImageDataset
+from datasets.image_dataset2 import image_dataset
 from datasets.elevater_utils import image_cls_val_splits
 import pickle
 
@@ -275,10 +276,13 @@ def evaluate_captioning(
         elif args.dataset_name == 'ADE20k':
             dataset_func = ADE20k
             data_split = 'validation'
-        else:
+        elif args.dataset_name == 'imagenet-1k':
             # image classification datasets
             dataset_func = ImageDataset
             data_split = image_cls_val_splits[args.dataset_name]
+        else:
+            dataset_func = image_dataset
+            data_split = None
 
         if args.model == 'open_flamingo':
             test_dataset = dataset_func(

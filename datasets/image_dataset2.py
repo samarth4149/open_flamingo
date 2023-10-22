@@ -5,11 +5,11 @@ import pathlib
 from vision_datasets import Usages
 from torchvision import transforms
 from PIL import Image
-# from datasets.imagenet_utils import openai_imagenet_classnames
-# from datasets.elevater_utils import class_names
+from datasets.imagenet_utils import openai_imagenet_classnames
+from datasets.elevater_utils import class_names
 
-from imagenet_utils import openai_imagenet_classnames
-from elevater_utils import class_names
+# from imagenet_utils import openai_imagenet_classnames
+# from elevater_utils import class_names
 
 VISION_DATASET_STORAGE = 'https://cvinthewildeus.blob.core.windows.net/datasets'
 
@@ -21,10 +21,10 @@ def get_dataset_hub():
     return hub
 
 
-def image_dataset(dataroot, dataset_name, transform):
+def image_dataset(root, transform, dataset_name, **kwargs):
     hub = get_dataset_hub()
     vision_dataset_storage = 'https://cvinthewildeus.blob.core.windows.net/datasets'
-    results = hub.create_dataset_manifest(vision_dataset_storage, dataroot, dataset_name, usage=Usages.TEST_PURPOSE)
+    results = hub.create_dataset_manifest(vision_dataset_storage, root, dataset_name, usage=Usages.TEST_PURPOSE)
     test_set, test_set_dataset_info, _ = results
 
     test_set = TorchDataset(ManifestDataset(test_set_dataset_info, test_set), transform=transform)
