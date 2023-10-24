@@ -142,7 +142,8 @@ class MiniGPT4_llama2():
         for class_name in class_names:
             messages= [(roles[0], "<Img><ImageHere></Img> %s" % prompt), (roles[1], class_name)]
             sentence = self.create_prompt(system, sep, messages)
-
+            import pdb
+            pdb.set_trace()
             sentence_segs = sentence.split('<ImageHere>')
 
             seg_tokens = [
