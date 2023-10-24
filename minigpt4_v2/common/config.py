@@ -98,6 +98,8 @@ class Config:
             builder_cls = registry.get_builder_class(dataset_name)
 
             dataset_config_type = datasets[dataset_name].get("type", "default")
+            import pdb
+            pdb.set_trace()
             dataset_config_path = builder_cls.default_config_path(
                 type=dataset_config_type
             )
