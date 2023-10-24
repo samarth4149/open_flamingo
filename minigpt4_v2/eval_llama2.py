@@ -9,9 +9,9 @@ import torch
 import torch.backends.cudnn as cudnn
 from PIL import Image
 
-from minigpt4.common.config import Config
-from minigpt4.common.dist_utils import get_rank
-from minigpt4.common.registry import registry
+from minigpt4_v2.common.config import Config
+from minigpt4_v2.common.dist_utils import get_rank
+from minigpt4_v2.common.registry import registry
 from minigpt4.conversation.conversation import Chat, CONV_VISION
 from transformers import StoppingCriteria, StoppingCriteriaList
 from models.prompt_learning import PromptLearner

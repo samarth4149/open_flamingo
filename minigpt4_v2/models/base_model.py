@@ -20,10 +20,10 @@ from peft import (
     prepare_model_for_int8_training,
 )
 
-from minigpt4.common.dist_utils import download_cached_file
-from minigpt4.common.utils import get_abs_path, is_url
-from minigpt4.models.eva_vit import create_eva_vit_g
-from minigpt4.models.modeling_llama import LlamaForCausalLM
+from minigpt4_v2.common.dist_utils import download_cached_file
+from minigpt4_v2.common.utils import get_abs_path, is_url
+from minigpt4_v2.models.eva_vit import create_eva_vit_g
+from minigpt4_v2.models.modeling_llama import LlamaForCausalLM
 
 
 

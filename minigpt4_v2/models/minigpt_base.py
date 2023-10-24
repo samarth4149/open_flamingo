@@ -5,8 +5,8 @@ import torch
 from torch.cuda.amp import autocast as autocast
 import torch.nn as nn
 
-from minigpt4.common.registry import registry
-from minigpt4.models.base_model import BaseModel
+from minigpt4_v2.common.registry import registry
+from minigpt4_v2.models.base_model import BaseModel
 from transformers import StoppingCriteria, StoppingCriteriaList
 
 

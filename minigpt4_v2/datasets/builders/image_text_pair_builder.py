@@ -2,10 +2,10 @@ import os
 import logging
 import warnings
 
-from minigpt4.common.registry import registry
-from minigpt4.datasets.builders.base_dataset_builder import BaseDatasetBuilder
-from minigpt4.datasets.datasets.laion_dataset import LaionDataset
-from minigpt4.datasets.datasets.cc_sbu_dataset import CCSBUDataset, CCSBUAlignDataset
+from minigpt4_v2.common.registry import registry
+from minigpt4_v2.datasets.builders.base_dataset_builder import BaseDatasetBuilder
+from minigpt4_v2.datasets.datasets.laion_dataset import LaionDataset
+from minigpt4_v2.datasets.datasets.cc_sbu_dataset import CCSBUDataset, CCSBUAlignDataset
 
 
 @registry.register_builder("cc_sbu")
