@@ -20,6 +20,7 @@ from open_flamingo.eval.coco_metric import postprocess_captioning_generation
 from tqdm import tqdm
 from minigpt4.common.config import Config
 from minigpt4.eval import MiniGPT4
+from minigpt4_v2.eval_llama2 import MiniGPT4_llama2
 from llava.eval import LLaVA
 
 from open_flamingo.eval.eval_model import BaseEvalModel
@@ -128,6 +129,9 @@ def main():
     elif args.model == 'minigpt4':
         cfg = Config(args)
         eval_model = MiniGPT4(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
+    elif args.model == 'minigpt4_llama2':
+        cfg = Config(args)
+        eval_model = MiniGPT4_llama2(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
     else:
         module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
         eval_model = module.EvalModel(model_args)
@@ -295,7 +299,7 @@ def evaluate_captioning(
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor, dataset_name=args.dataset_name
             )
-        elif args.model == 'minigpt4':
+        elif args.model in ['minigpt4', 'minigpt4_llama2']:
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor, dataset_name=args.dataset_name
             )
@@ -331,7 +335,7 @@ def evaluate_captioning(
         prompt = args.coco_prompts
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
-        if args.model in ['minigpt4', 'llava']:
+        if args.model in ['minigpt4', 'minigpt4_llama2', 'llava']:
             outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
         else:
             outputs = eval_model.get_outputs(
