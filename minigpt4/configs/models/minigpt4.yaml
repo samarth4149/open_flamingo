@@ -13,8 +13,8 @@ model:
   num_query_token: 32
 
   # Vicuna
-#  llama_model: "/projectnb/ivc-ml/sunxm/ckpt/gpt_vicuna/vicuna"
-  llama_model: "/projectnb/ivc-ml/sunxm/ckpt/gpt_vicuna/vicuna-7b"
+  llama_model: "/projectnb/ivc-ml/sunxm/ckpt/gpt_vicuna/vicuna"
+#  llama_model: "/projectnb/ivc-ml/sunxm/ckpt/gpt_vicuna/vicuna-7b"
 
   # generation configs
   prompt: ""
