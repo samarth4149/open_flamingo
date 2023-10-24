@@ -127,9 +127,11 @@ def main():
     if args.model == 'llava':
         eval_model = LLaVA(model_args['model_name'])
     elif args.model == 'minigpt4':
+        from minigpt4.common.config import Config
         cfg = Config(args)
         eval_model = MiniGPT4(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
     elif args.model == 'minigpt4_llama2':
+        from minigpt4_v2.common.config import Config
         cfg = Config(args)
         eval_model = MiniGPT4_llama2(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
     else:
