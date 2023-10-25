@@ -130,7 +130,7 @@ class MiniGPT4_llama2():
 
     def get_GPTScore(self, batch_images, class_names,
                     system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
-                    sep = "", prompt= 'a photo of '):
+                    sep = "", prompt= 'a photo of ',  task='',):
         batch_images = batch_images.to(self.device)
         image_emb, _ = self.model.encode_img(batch_images)
 
@@ -141,7 +141,7 @@ class MiniGPT4_llama2():
         prefix_outputs = None
         # class_names = ['tench', 'sink']
         for class_name in class_names:
-            messages= [(roles[0], "<Img><ImageHere></Img> %s" % prompt), (roles[1], class_name)]
+            messages= [(roles[0], "<Img><ImageHere></Img> %s %s" % (task, prompt)), (roles[1], class_name)]
             sentence = self.create_prompt(system, sep, messages)
             sentence_segs = sentence.split('<ImageHere>')
 
