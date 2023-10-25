@@ -87,14 +87,15 @@ class MiniGPT4_llama2():
 
     def get_outputs(self, batch_images,
                     system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
-                    sep = "", prompt= 'describe the image as detailed as possible',
+                    sep = "", prompt= 'describe the image as detailed as possible', task='',
                     max_new_tokens=200, num_beams=1, do_sample=True, min_length=1, top_p=0.9, repetition_penalty=1.0,
                     length_penalty=1, temperature=1.0):
         batch_images = batch_images.to(self.device)
         image_emb, _ = self.model.encode_img(batch_images)
 
         roles = ("<s>[INST] ", " [/INST] ")
-        messages= [(roles[0], "<Img><ImageHere></Img> %s" % prompt), (roles[1], None)]
+
+        messages= [(roles[0], "<Img><ImageHere></Img> %s %s" % (task, prompt)), (roles[1], None)]
         sentence = self.create_prompt(system, sep, messages)
 
         sentence_segs = sentence.split('<ImageHere>')

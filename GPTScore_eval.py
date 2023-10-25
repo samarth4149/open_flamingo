@@ -103,6 +103,13 @@ parser.add_argument(
         help="the output directory path",
     )
 
+parser.add_argument(
+        "--task",
+        type=str,
+        default='',
+        help="the task identifier for minigpt-v"
+    )
+
 parser.add_argument("--cfg-path",  help="path to configuration file.")
 
 
@@ -130,7 +137,7 @@ def main():
         from minigpt4.common.config import Config
         cfg = Config(args)
         eval_model = MiniGPT4(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
-    elif args.model == 'minigpt4_llama2':
+    elif args.model in ['minigpt4_llama2', 'minigpt_v']:
         from minigpt4_v2.common.config import Config
         cfg = Config(args)
         eval_model = MiniGPT4_llama2(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
@@ -301,7 +308,7 @@ def evaluate_captioning(
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor, dataset_name=args.dataset_name
             )
-        elif args.model in ['minigpt4', 'minigpt4_llama2']:
+        elif args.model in ['minigpt4', 'minigpt4_llama2', 'minigpt_v']:
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor, dataset_name=args.dataset_name
             )
@@ -339,6 +346,9 @@ def evaluate_captioning(
 
         if args.model in ['minigpt4', 'minigpt4_llama2', 'llava']:
             outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
+        elif args.model in ['minigpt_v']:
+            outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt,
+                                              task=args.task)
         else:
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
