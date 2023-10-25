@@ -157,7 +157,8 @@ class MiniGPT4_llama2():
             ]
             #
             seg_2nd_token = seg_tokens[1]
-
+            import pdb
+            pdb.set_trace()
             seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
             embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
             mixed_embs = torch.cat(embs, dim=1)
