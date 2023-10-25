@@ -157,9 +157,11 @@ class MiniGPT4_llama2():
             ]
             #
             seg_2nd_token = seg_tokens[1]
-            import pdb
-            pdb.set_trace()
-            seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+            try:
+                seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+            except AttributeError:
+                seg_embs = [self.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+
             embs = [self.expand_emb(seg_embs[0], batch_images.shape[0]), image_emb, self.expand_emb(seg_embs[1], batch_images.shape[0])]
             mixed_embs = torch.cat(embs, dim=1)
 
@@ -180,7 +182,11 @@ class MiniGPT4_llama2():
                     for i, seg in enumerate(prefix_sentence_segs)
                 ]
                 prefix_2nd_token = prefix_seg_tokens[1]
-                prefix_seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+                try:
+                    prefix_seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+                except AttributeError:
+                    prefix_seg_embs = [self.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+
                 prefix_embs = [self.expand_emb(prefix_seg_embs[0], batch_images.shape[0]), image_emb,
                         self.expand_emb(prefix_seg_embs[1], batch_images.shape[0])]
                 prefix_mixed_embs = torch.cat(prefix_embs, dim=1)
