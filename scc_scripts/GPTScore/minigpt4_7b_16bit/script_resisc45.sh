@@ -44,4 +44,4 @@ conda activate openflamingo
 CFG_PATH='minigpt4/eval_configs/minigpt4_eval_16bit_7b.yaml'
 DEVICE=0
 
-python GPTScore_eval.py  --batch_size 64 --eval_coco --coco_dataroot    ../../datasets/    -device $DEVICE --coco_prompts "a photo of a " --model "minigpt4" --cfg-path $CFG_PATH --dataset_name resisc45_clip
+python GPTScore_eval.py  --batch_size 64 --eval_coco --coco_dataroot    ../../datasets/    -device $DEVICE --coco_prompts "satellite imagery of " --model "minigpt4" --cfg-path $CFG_PATH --dataset_name resisc45_clip
