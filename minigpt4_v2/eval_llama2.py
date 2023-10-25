@@ -141,7 +141,11 @@ class MiniGPT4_llama2():
         prefix_outputs = None
         # class_names = ['tench', 'sink']
         for class_name in class_names:
-            messages= [(roles[0], "<Img><ImageHere></Img> %s %s" % (task, prompt)), (roles[1], class_name)]
+            if task != '':
+                messages= [(roles[0], "<Img><ImageHere></Img> %s %s" % (task, prompt)), (roles[1], class_name)]
+            else:
+                messages= [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], class_name)]
+
             sentence = self.create_prompt(system, sep, messages)
             sentence_segs = sentence.split('<ImageHere>')
 
@@ -160,7 +164,10 @@ class MiniGPT4_llama2():
 
             overall_length = mixed_embs.shape[1]
             if prefix_length is None or prefix_2nd_token is None or prefix_outputs is None:
-                prefix_messages = [(roles[0], "<Img><ImageHere></Img> %s" % prompt), (roles[1], None)]
+                if task != '':
+                    prefix_messages = [(roles[0], "<Img><ImageHere></Img> %s %s" % (task, prompt)), (roles[1], None)]
+                else:
+                    prefix_messages = [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], None)]
                 prefix_sentence = self.create_prompt(system, sep, prefix_messages)
 
                 prefix_sentence_segs = prefix_sentence.split('<ImageHere>')
