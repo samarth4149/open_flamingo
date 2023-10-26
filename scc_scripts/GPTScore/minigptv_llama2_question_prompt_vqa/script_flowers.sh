@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N fgvc
+#$ -N flowers
 
 #$ -m bea
 
@@ -44,4 +44,4 @@ conda activate openflamingo
 CFG_PATH='minigpt4_v2/eval_configs/minigptv2_eval.yaml'
 DEVICE=0
 
-python GPTScore_eval.py  --batch_size 12 --eval_coco --coco_dataroot    ../../datasets/    -device $DEVICE --coco_prompts "a photo of a " --model "minigpt4_llama2" --cfg-path $CFG_PATH --dataset_name fgvc-aircraft-2013b-variants102   --task vqa
+python GPTScore_eval.py  --batch_size 12 --eval_coco --coco_dataroot    ../../datasets/    -device $DEVICE --coco_prompts "a photo of a " --model "What is the flower in the photo? " --cfg-path $CFG_PATH --dataset_name oxford-flower-102  --task vqa
