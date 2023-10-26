@@ -104,6 +104,8 @@ class LLaVA():
             prefix_output_logits = precomputed_output.logits.detach()
 
         for class_name in class_names:
+            import pdb
+            pdb.set_trace()
             inputs = self.tokenizer([class_name])
             input_ids = torch.as_tensor(inputs.input_ids).cuda()
             input_ids = input_ids.tile((batch_images.shape[0], 1))
