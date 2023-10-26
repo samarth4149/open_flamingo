@@ -55,6 +55,8 @@ class LLaVA():
         conv.append_message(conv.roles[0], qs)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
+        import pdb
+        pdb.set_trace()
         inputs = self.tokenizer([prompt])
         input_ids = torch.as_tensor(inputs.input_ids).cuda()
 
