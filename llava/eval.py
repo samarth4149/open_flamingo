@@ -14,6 +14,11 @@ DEFAULT_IM_START_TOKEN = "<im_start>"
 DEFAULT_IM_END_TOKEN = "<im_end>"
 
 
+def _detach_pkvs(pkvs):
+    """Detach a set of past key values."""
+    return tuple([tuple([x.detach() for x in inner]) for inner in pkvs])
+
+
 class LLaVA():
     def __init__(self, model_name):
         disable_torch_init()
@@ -43,7 +48,7 @@ class LLaVA():
 
     def encode_prompt(self, query):
         qs = query
-        qs = qs + '\n' + DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * self.image_token_len + DEFAULT_IM_END_TOKEN
+        qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * self.image_token_len + DEFAULT_IM_END_TOKEN + '\n' + qs
 
         # get system message
         conv = conv_templates["multimodal"].copy()
@@ -83,3 +88,37 @@ class LLaVA():
             predictions.append(output)
 
         return predictions
+
+    def get_GPTScore(self, batch_images, prompt, class_names):
+        prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
+        prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
+        with torch.inference_mode():
+            precomputed_output = self.model(
+                prefix_input_ids,
+                images=batch_images.half().cuda(),
+                use_cache=True
+            )
+            precomputed_pkvs = _detach_pkvs(precomputed_output.past_key_values)
+
+            prefix_output_logits = precomputed_output.logits.detach()
+
+        for class_name in class_names:
+            inputs = self.tokenizer([class_name])
+            input_ids = torch.as_tensor(inputs.input_ids).cuda()
+            input_ids = input_ids.tile((batch_images.shape[0], 1))
+            class_name_token_len = len(input_ids)
+            with torch.inference_mode():
+                outputs = self.model(
+                    input_ids,
+                    past_key_values= precomputed_pkvs,
+                )
+                outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
+                probs = torch.log_softmax(outputs_logits, dim=-1).detach()
+
+            probs = probs[:, :-1, :]
+            probs = probs[:, -class_name_token_len:, :]
+            assert probs.shape[1] == input_ids.shape[1]
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+
+            class_prob = gen_probs.mean(dim=-1)
+            class_probs.append(class_prob)
