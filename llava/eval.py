@@ -30,9 +30,9 @@ class LLaVA():
         self.image_processor = CLIPImageProcessor.from_pretrained(self.model.config.mm_vision_tower, torch_dtype=torch.float16)
 
         mm_use_im_start_end = getattr(self.model.config, "mm_use_im_start_end", False)
-        self.tokenizer .add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
+        self.tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
         if mm_use_im_start_end:
-            self.tokenizer .add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
+            self.tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
 
         vision_tower = self.model.get_model().vision_tower[0]
         vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16,
@@ -40,6 +40,8 @@ class LLaVA():
         self.model.get_model().vision_tower[0] = vision_tower
 
         vision_config = vision_tower.config
+        import pdb
+        pdb.set_trace()
         vision_config.im_patch_token = self.tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
         vision_config.use_im_start_end = mm_use_im_start_end
         vision_config.im_start_token, vision_config.im_end_token = self.tokenizer.convert_tokens_to_ids(
