@@ -90,6 +90,7 @@ class LLaVA():
         return predictions
 
     def get_GPTScore(self, batch_images, prompt, class_names):
+        class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
         prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
         with torch.inference_mode():
@@ -122,3 +123,7 @@ class LLaVA():
 
             class_prob = gen_probs.mean(dim=-1)
             class_probs.append(class_prob)
+
+        class_probs = torch.stack(class_probs, dim=-1)
+
+        return class_probs
