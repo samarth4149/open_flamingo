@@ -3,7 +3,7 @@ model:
   model_type: pretrain
   max_txt_len: 160
   end_sym: "</s>"
-  low_resource: True
+  low_resource: False
   prompt_template: '[INST] {} [/INST]'
   ckpt: '/projectnb/ivc-ml/sunxm/ckpt/minigpt4_weights/minigptv2_checkpoint.pth'
   lora_r: 64
