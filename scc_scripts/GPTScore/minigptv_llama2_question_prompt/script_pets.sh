@@ -44,4 +44,4 @@ conda activate openflamingo
 CFG_PATH='minigpt4_v2/eval_configs/minigptv2_eval.yaml'
 DEVICE=0
 
-python GPTScore_eval.py  --batch_size 12 --eval_coco --coco_dataroot    ../../datasets/    -device $DEVICE --coco_prompts "a photo of a " --model "minigpt4_llama2" --cfg-path $CFG_PATH --dataset_name oxford-iiit-pets
+python GPTScore_eval.py  --batch_size 12 --eval_coco --coco_dataroot    ../../datasets/    -device $DEVICE --coco_prompts "What is the pet in the photo? " --model "minigpt4_llama2" --cfg-path $CFG_PATH --dataset_name oxford-iiit-pets
