@@ -22,7 +22,8 @@ def _detach_pkvs(pkvs):
 class LLaVA():
     def __init__(self, model_name):
         disable_torch_init()
-
+        import pdb
+        pdb.set_trace()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         self.model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16,
