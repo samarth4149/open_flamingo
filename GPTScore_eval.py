@@ -135,7 +135,7 @@ def main():
     if args.model == 'llava':
         eval_model = LLaVA(model_args['model_name'])
     elif args.model == 'llava_v1_5':
-        eval_model = LLaVA_v1_5(model_name=model_args['model_name'], model_path=model_args['model_path'], model_base=model_args['model_base'])
+        eval_model = LLaVA_v1_5(model_name=model_args['model_name'], model_path=model_args['model_path'], model_base=model_args.get('model_base', None))
     elif args.model == 'minigpt4':
         from minigpt4.common.config import Config
         cfg = Config(args)

@@ -19,7 +19,7 @@ def _detach_pkvs(pkvs):
 
 
 class LLaVA_v1_5():
-    def __init__(self, model_path, model_base, model_name):
+    def __init__(self, model_path, model_name,  model_base=None):
         disable_torch_init()
 
         self.tokenizer, self.model, self.image_processor, context_len = self.load_pretrained_model(model_path, model_base, model_name)
