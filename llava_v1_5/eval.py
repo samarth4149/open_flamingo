@@ -21,10 +21,6 @@ def _detach_pkvs(pkvs):
 class LLaVA_v1_5():
     def __init__(self, model_path, model_base, model_name):
         disable_torch_init()
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-
-        self.model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16,
-                                                      use_cache=True).cuda()
 
         self.tokenizer, self.model, self.image_processor, context_len = self.load_pretrained_model(model_path, model_base, model_name)
 
