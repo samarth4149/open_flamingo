@@ -107,7 +107,7 @@ class LLaVA():
             inputs = self.tokenizer([class_name])
             input_ids = torch.as_tensor(inputs.input_ids)[:, 1:].cuda()
             input_ids = input_ids.tile((batch_images.shape[0], 1))
-            class_name_token_len = len(input_ids)
+            class_name_token_len = input_ids.shape[1]
             with torch.inference_mode():
                 outputs = self.model(
                     input_ids,
