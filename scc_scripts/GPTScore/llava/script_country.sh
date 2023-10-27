@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N a_photo_of
+#$ -N country211
 
 #$ -m bea
 
@@ -39,6 +39,6 @@ module load gcc
 cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 
 echo 'activating virtual environment'
-conda activate openflamingo
+conda activate llava
 
-python caption_evaluate.py --model_name ../../ckpt/llava_13b/ --model llava  --coco_prompts "a photo of " --eval_coco --coco_dataroot    ../../datasets/mscoco_2014/  --batch_size 16
+python GPTScore_eval.py  --model_name /projectnb/ivc-ml/sunxm/ckpt/llava_13b/  --model llava  --coco_prompts "a photo i took in "  --coco_dataroot    ../../datasets/  --batch_size 16 --dataset_name cifar-100
