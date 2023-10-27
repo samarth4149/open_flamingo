@@ -160,6 +160,8 @@ class LLaVA_v1_5():
         conv.append_message(conv.roles[0], qs)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
+        import pdb
+        pdb.set_trace()
         inputs = self.tokenizer([prompt])
         input_ids = torch.as_tensor(inputs.input_ids).cuda()
 
@@ -196,11 +198,11 @@ class LLaVA_v1_5():
 
     def get_GPTScore(self, batch_images, prompt, class_names):
         batch_images = batch_images['pixel_values'][0]
+        import pdb
+        pdb.set_trace()
         class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
         prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
-        import pdb
-        pdb.set_trace()
         with torch.inference_mode():
             precomputed_output = self.model(
                 prefix_input_ids,
