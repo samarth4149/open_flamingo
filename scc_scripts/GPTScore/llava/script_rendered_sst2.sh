@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N pets
+#$ -N sst2
 
 #$ -m bea
 

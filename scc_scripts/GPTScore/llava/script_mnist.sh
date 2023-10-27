@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N SST2
+#$ -N mnist
 
 #$ -m bea
 
