@@ -89,6 +89,7 @@ class LLaVA():
         return predictions
 
     def get_GPTScore(self, batch_images, prompt, class_names):
+        batch_images = batch_images['pixel_values'][0]
         class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
         import pdb
