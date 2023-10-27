@@ -24,7 +24,7 @@ class LLaVA():
         disable_torch_init()
         import pdb
         pdb.set_trace()
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
 
         self.model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16,
                                                       use_cache=True).cuda()
