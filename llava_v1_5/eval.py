@@ -6,10 +6,10 @@ from llava_v1_5.conversation import conv_templates, SeparatorStyle
 from llava_v1_5.utils import disable_torch_init
 from transformers import CLIPVisionModel, CLIPImageProcessor, StoppingCriteria
 from llava_v1_5.model import *
-from llava_v1_5.mm_utils import KeywordsStoppingCriteria
+from llava_v1_5.mm_utils import KeywordsStoppingCriteria, tokenizer_image_token
 import warnings
 import shutil
-from llava_v1_5.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_IMAGE_TOKEN
+from llava_v1_5.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_IMAGE_TOKEN, IMAGE_TOKEN_INDEX
 
 
 
@@ -163,10 +163,13 @@ class LLaVA_v1_5():
         conv.append_message(conv.roles[0], qs)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
-        import pdb
-        pdb.set_trace()
-        inputs = self.tokenizer([prompt])
-        input_ids = torch.as_tensor(inputs.input_ids).cuda()
+
+        input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+
+
+
+        # inputs = self.tokenizer([prompt])
+        # input_ids = torch.as_tensor(inputs.input_ids).cuda()
 
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
