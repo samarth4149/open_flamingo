@@ -41,4 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate llava
 
-python GPTScore_eval.py  --model_name /projectnb/ivc-ml/sunxm/ckpt/llava_13b/  --model llava  --coco_prompts "a photo i took in "  --coco_dataroot    ../../datasets/  --batch_size 16 --dataset_name cifar-100
+python GPTScore_eval.py  --model_name /projectnb/ivc-ml/sunxm/ckpt/llava_13b/  --model llava  --coco_prompts "a photo i took in "  --coco_dataroot    ../../datasets/  --batch_size 16 --dataset_name country211
