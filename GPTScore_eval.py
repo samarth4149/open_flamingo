@@ -313,8 +313,11 @@ def evaluate_captioning(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor, dataset_name=args.dataset_name
             )
         elif args.model == 'llava':
+            def image_transform(image, target):
+                modified_image = eval_model.image_processor(image)
+                return modified_image, target
             test_dataset = dataset_func(
-                root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor, dataset_name=args.dataset_name
+                root=args.coco_dataroot, data_split=data_split, transform=image_transform, dataset_name=args.dataset_name
             )
         else:
             raise ValueError(f'model {args.model} is not supported')

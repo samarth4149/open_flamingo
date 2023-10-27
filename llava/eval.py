@@ -22,8 +22,6 @@ def _detach_pkvs(pkvs):
 class LLaVA():
     def __init__(self, model_name):
         disable_torch_init()
-        import pdb
-        pdb.set_trace()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
 
         self.model = LlavaLlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16,
@@ -41,8 +39,6 @@ class LLaVA():
         self.model.get_model().vision_tower[0] = vision_tower
 
         vision_config = vision_tower.config
-        import pdb
-        pdb.set_trace()
         vision_config.im_patch_token = self.tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
         vision_config.use_im_start_end = mm_use_im_start_end
         vision_config.im_start_token, vision_config.im_end_token = self.tokenizer.convert_tokens_to_ids(
@@ -58,8 +54,6 @@ class LLaVA():
         conv.append_message(conv.roles[0], qs)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
-        import pdb
-        pdb.set_trace()
         inputs = self.tokenizer([prompt])
         input_ids = torch.as_tensor(inputs.input_ids).cuda()
 
