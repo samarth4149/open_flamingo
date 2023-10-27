@@ -166,8 +166,6 @@ class LLaVA_v1_5():
 
         input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
 
-
-
         # inputs = self.tokenizer([prompt])
         # input_ids = torch.as_tensor(inputs.input_ids).cuda()
 
@@ -204,8 +202,6 @@ class LLaVA_v1_5():
 
     def get_GPTScore(self, batch_images, prompt, class_names):
         batch_images = batch_images['pixel_values'][0]
-        import pdb
-        pdb.set_trace()
         class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
         prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
@@ -231,7 +227,6 @@ class LLaVA_v1_5():
                 )
                 outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
                 probs = torch.log_softmax(outputs_logits, dim=-1).detach()
-
 
             probs = probs[:, :-1, :]
             probs = probs[:, -class_name_token_len:, :]
