@@ -89,10 +89,10 @@ class LLaVA():
         return predictions
 
     def get_GPTScore(self, batch_images, prompt, class_names):
-        import pdb
-        pdb.set_trace()
         class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
+        import pdb
+        pdb.set_trace()
         prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
         with torch.inference_mode():
             precomputed_output = self.model(
@@ -105,8 +105,6 @@ class LLaVA():
             prefix_output_logits = precomputed_output.logits.detach()
 
         for class_name in class_names:
-            import pdb
-            pdb.set_trace()
             inputs = self.tokenizer([class_name])
             input_ids = torch.as_tensor(inputs.input_ids).cuda()
             input_ids = input_ids.tile((batch_images.shape[0], 1))
