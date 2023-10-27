@@ -25,20 +25,6 @@ class LLaVA_v1_5():
         self.tokenizer, self.model, self.image_processor, context_len = self.load_pretrained_model(model_path, model_base, model_name)
 
 
-        mm_use_im_start_end = getattr(self.model.config, "mm_use_im_start_end", False)
-
-        vision_tower = self.model.get_model().vision_tower[0]
-        vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=torch.float16,
-                                                       low_cpu_mem_usage=True).cuda()
-        self.model.get_model().vision_tower[0] = vision_tower
-
-        vision_config = vision_tower.config
-        vision_config.im_patch_token = self.tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
-        vision_config.use_im_start_end = mm_use_im_start_end
-        vision_config.im_start_token, vision_config.im_end_token = self.tokenizer.convert_tokens_to_ids(
-            [DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
-        self.image_token_len = (vision_config.image_size // vision_config.patch_size) ** 2
-
     def load_pretrained_model(self, model_path, model_base, model_name, device_map="auto",
                               device="cuda"):
         kwargs = {"device_map": device_map}
