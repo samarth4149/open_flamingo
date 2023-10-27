@@ -1,13 +1,13 @@
 """
 Usage:
-python3 -m llava.model.make_delta --base ~/model_weights/llama-7b --target ~/model_weights/llava-7b --delta ~/model_weights/llava-7b-delta --hub-repo-id liuhaotian/llava-7b-delta
+python3 -m llava_v1_5.model.make_delta --base ~/model_weights/llama-7b --target ~/model_weights/llava-7b --delta ~/model_weights/llava-7b-delta --hub-repo-id liuhaotian/llava-7b-delta
 """
 import argparse
 
 import torch
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from llava.model.utils import auto_upgrade
+from llava_v1_5.model.utils import auto_upgrade
 
 
 def make_delta(base_model_path, target_model_path, delta_path, hub_repo_id):

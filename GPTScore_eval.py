@@ -22,6 +22,7 @@ from minigpt4.common.config import Config
 from minigpt4.eval import MiniGPT4
 from minigpt4_v2.eval_llama2 import MiniGPT4_llama2
 from llava.eval import LLaVA
+from llava_v1_5.eval import LLaVA_v1_5
 
 from open_flamingo.eval.eval_model import BaseEvalModel
 
@@ -133,6 +134,8 @@ def main():
     }
     if args.model == 'llava':
         eval_model = LLaVA(model_args['model_name'])
+    elif args.model == 'llava_v1_5':
+        eval_model = LLaVA_v1_5(model_name=model_args['model_name'], model_path=model_args['model_path'], model_base=model_args['model_base'])
     elif args.model == 'minigpt4':
         from minigpt4.common.config import Config
         cfg = Config(args)
@@ -312,7 +315,7 @@ def evaluate_captioning(
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.vis_processor, dataset_name=args.dataset_name
             )
-        elif args.model == 'llava':
+        elif args.model in ['llava', 'llava_v1_5']:
             def image_transform(image, target):
                 modified_image = eval_model.image_processor(image)
                 return modified_image, target
@@ -347,7 +350,7 @@ def evaluate_captioning(
         prompt = args.coco_prompts
         batch_text = [f"<image>{prompt} "] * len(batch_images)
 
-        if args.model in ['minigpt4', 'minigpt4_llama2', 'llava']:
+        if args.model in ['minigpt4', 'minigpt4_llama2', 'llava', 'llava_v1_5']:
             outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
         elif args.model in ['minigpt_v']:
             outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt,
