@@ -92,8 +92,6 @@ class LLaVA():
         batch_images = batch_images['pixel_values'][0]
         class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
-        import pdb
-        pdb.set_trace()
         prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
         with torch.inference_mode():
             precomputed_output = self.model(
@@ -107,7 +105,7 @@ class LLaVA():
 
         for class_name in class_names:
             inputs = self.tokenizer([class_name])
-            input_ids = torch.as_tensor(inputs.input_ids).cuda()
+            input_ids = torch.as_tensor(inputs.input_ids)[:, 1:].cuda()
             input_ids = input_ids.tile((batch_images.shape[0], 1))
             class_name_token_len = len(input_ids)
             with torch.inference_mode():
@@ -115,6 +113,8 @@ class LLaVA():
                     input_ids,
                     past_key_values= precomputed_pkvs,
                 )
+                import pdb
+                pdb.set_trace()
                 outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
                 probs = torch.log_softmax(outputs_logits, dim=-1).detach()
 
