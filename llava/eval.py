@@ -113,10 +113,11 @@ class LLaVA():
                     input_ids,
                     past_key_values= precomputed_pkvs,
                 )
-                import pdb
-                pdb.set_trace()
                 outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
                 probs = torch.log_softmax(outputs_logits, dim=-1).detach()
+
+            import pdb
+            pdb.set_trace()
 
             probs = probs[:, :-1, :]
             probs = probs[:, -class_name_token_len:, :]
