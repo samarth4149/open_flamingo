@@ -41,4 +41,4 @@ cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 echo 'activating virtual environment'
 conda activate llava
 
-python GPTScore_eval.py  --model_path /projectnb/ivc-ml/sunxm/ckpt/llava-v1.5-13b-lora/ --model_base /projectnb/ivc-ml/sunxm/ckpt/llava-v1.5-13b/ --model_name llava-v1.5-13b-lora  --model llava_v1_5  --coco_prompts " a photo of a type of aircraft called "  --coco_dataroot    ../../datasets/  --batch_size 16 --dataset_name fgvc-aircraft-2013b-variants102
+python GPTScore_eval.py  --model_path /projectnb/ivc-ml/sunxm/ckpt/llava-v1.5-13b-lora/ --model_base /projectnb/ivc-ml/sunxm/ckpt/llava-v1.5-13b/ --model_name llava-v1.5-13b-lora  --model llava_v1_5  --coco_prompts " a photo of a type of aircraft called "  --coco_dataroot    ../../datasets/  --batch_size 12 --dataset_name fgvc-aircraft-2013b-variants102
