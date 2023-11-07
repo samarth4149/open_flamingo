@@ -10,7 +10,7 @@ from llava_v1_5.mm_utils import KeywordsStoppingCriteria, tokenizer_image_token
 import warnings
 import shutil
 from llava_v1_5.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_IMAGE_TOKEN, IMAGE_TOKEN_INDEX
-
+from tqdm import tqdm
 
 
 def _detach_pkvs(pkvs):
@@ -215,7 +215,7 @@ class LLaVA_v1_5():
 
             prefix_output_logits = precomputed_output.logits.detach()
 
-        for class_name in class_names:
+        for class_name in tqdm(class_names):
             inputs = self.tokenizer([class_name])
             input_ids = torch.as_tensor(inputs.input_ids)[:, 1:].cuda()
             input_ids = input_ids.tile((batch_images.shape[0], 1))
