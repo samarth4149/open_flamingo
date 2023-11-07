@@ -297,8 +297,8 @@ def evaluate_captioning(
             data_split = 'validation'
         elif args.dataset_name == 'imagenet-1k':
             # image classification datasets
-            dataset_func = ImageDataset
-            data_split = image_cls_val_splits[args.dataset_name]
+            dataset_func = image_dataset
+            data_split = None
         else:
             dataset_func = image_dataset
             data_split = None
@@ -338,6 +338,8 @@ def evaluate_captioning(
             batch_images, batch_target, batch_path = batch
             batch_target = batch_target.max(dim=1)[0]
         elif dataset_name == 'imagenet-1k':
+            import pdb
+            pdb.set_trace()
             batch_images = batch['image']
             batch_target = batch['class_id']
         else:

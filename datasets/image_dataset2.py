@@ -1,6 +1,8 @@
 from vision_datasets import DatasetHub
 from vision_datasets.pytorch import TorchDataset
 from vision_datasets import ManifestDataset
+import torchvision.datasets
+import os
 import pathlib
 from vision_datasets import Usages
 from torchvision import transforms
@@ -26,8 +28,11 @@ def image_dataset(root, transform, dataset_name, **kwargs):
     vision_dataset_storage = 'https://cvinthewildeus.blob.core.windows.net/datasets'
     results = hub.create_dataset_manifest(vision_dataset_storage, root, dataset_name, usage=Usages.TEST_PURPOSE)
     test_set, test_set_dataset_info, _ = results
-
+    # if dataset_name != 'imagenet-1k':
     test_set = TorchDataset(ManifestDataset(test_set_dataset_info, test_set), transform=transform)
+    # else:
+    #     test_set = torchvision.datasets.ImageFolder(os.path.join(root, 'val'), transform=transform)
+
     if dataset_name == 'imagenet-1k':
         test_set.classnames = openai_imagenet_classnames
     else:
