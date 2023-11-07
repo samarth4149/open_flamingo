@@ -337,11 +337,11 @@ def evaluate_captioning(
         if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
             batch_images, batch_target, batch_path = batch
             batch_target = batch_target.max(dim=1)[0]
-        elif dataset_name == 'imagenet-1k':
-            import pdb
-            pdb.set_trace()
-            batch_images = batch['image']
-            batch_target = batch['class_id']
+        # elif dataset_name == 'imagenet-1k':
+        #     import pdb
+        #     pdb.set_trace()
+        #     batch_images = batch['image']
+        #     batch_target = batch['class_id']
         else:
             batch_images = batch[0]
             batch_target = batch[1][0]
