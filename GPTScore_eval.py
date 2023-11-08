@@ -10,15 +10,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score
-import sng_parser
-import spacy
-
-from copy import deepcopy
-
-from nltk.corpus import wordnet
-from open_flamingo.eval.coco_metric import postprocess_captioning_generation
 from tqdm import tqdm
-from minigpt4.common.config import Config
 from minigpt4.eval import MiniGPT4
 from minigpt4_v2.eval_llama2 import MiniGPT4_llama2
 from llava.eval import LLaVA
@@ -31,10 +23,7 @@ from datasets.pascal_voc import voc2007
 from datasets.openimages_common import OpenImagesCommon
 from datasets.openimages_rare import OpenImagesRare
 from datasets.ade20k import ADE20k
-from datasets.image_datasets import ImageDataset
 from datasets.image_dataset2 import image_dataset
-from datasets.elevater_utils import image_cls_val_splits
-import pickle
 
 parser = argparse.ArgumentParser()
 
