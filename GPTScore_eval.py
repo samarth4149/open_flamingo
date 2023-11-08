@@ -100,6 +100,21 @@ parser.add_argument(
         help="the task identifier for minigpt-v"
     )
 
+
+parser.add_argument(
+        "--num_splits",
+        type=int,
+        default=None,
+        help="the task identifier for minigpt-v"
+    )
+
+parser.add_argument(
+        "--split_id",
+        type=int,
+        default=None,
+        help="the task identifier for minigpt-v"
+    )
+
 parser.add_argument("--cfg-path",  help="path to configuration file.")
 
 
@@ -264,6 +279,8 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
     if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k", 'imagenet-1k',
                         'cifar-10', 'cifar-100', 'oxford-flower-102', 'stanford-cars', 'rendered-sst2', 'eurosat_clip',
                         'mnist', 'oxford-iiit-pets', 'gtsrb', 'resisc45_clip', 'dtd', 'fgvc-aircraft-2013b-variants102',
@@ -316,7 +333,14 @@ def evaluate_captioning(
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
+
     class_names = test_dataset.classnames
+    if args.split_id is not None and args.num_splits is not None:
+        dataset_length = len(test_dataset)
+        split_size = (dataset_length - 1) // args.num_splits
+        split_range = list(range(args.split_id * split_size, min([dataset_length, (args.split_id + 1)* split_size])))
+        test_dataset = torch.utils.data.Subset(test_dataset, split_range)
+
     test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
     targets = []
@@ -373,6 +397,9 @@ def evaluate_captioning(
     else:
         acc = top_k_accuracy(preds.cpu(), targets, k=1)
         print('Top-1 is %0.2f' % (acc*100))
+
+    np.save(os.path.join(args.output_dir, 'pred_%d.npy' % args.split_id), preds.cpu().numpy())
+    np.save(os.path.join(args.output_dir, 'target_%d.npy' % args.split_id), targets.cpu().numpy())
 
 
 
