@@ -338,6 +338,8 @@ def evaluate_captioning(
     if args.split_id is not None and args.num_splits is not None:
         dataset_length = len(test_dataset)
         split_size = (dataset_length - 1) // args.num_splits + 1
+        import pdb
+        pdb.set_trace()
         split_range = list(range(args.split_id * split_size, min([dataset_length, (args.split_id + 1)* split_size])))
         test_dataset = torch.utils.data.Subset(test_dataset, split_range)
 
