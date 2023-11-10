@@ -420,8 +420,9 @@ def evaluate_captioning(
         acc = top_k_accuracy(preds.cpu(), targets, k=1)
         print('Top-1 is %0.2f' % (acc*100))
 
-    np.save(os.path.join(args.output_dir, 'pred_%d.npy' % args.split_id), preds.cpu().numpy())
-    np.save(os.path.join(args.output_dir, 'target_%d.npy' % args.split_id), targets.cpu().numpy())
+    if args.split_id is not None:
+        np.save(os.path.join(args.output_dir, 'pred_%d.npy' % args.split_id), preds.cpu().numpy())
+        np.save(os.path.join(args.output_dir, 'target_%d.npy' % args.split_id), targets.cpu().numpy())
 
 
 
