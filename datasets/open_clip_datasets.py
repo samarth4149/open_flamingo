@@ -34,7 +34,7 @@ dataset = build_dataset(
     custom_classname_file="en_classnames.json",
     wds_cache_dir=None,
 )
-dataloader =torch.utils.data.DataLoader (
+dataloader =torch.utils.data.DataLoader(
                 dataset.batched(10), batch_size=None,
                 shuffle=False, num_workers=1,
             )
