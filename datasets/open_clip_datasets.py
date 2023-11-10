@@ -5,7 +5,7 @@ from torchvision.transforms import v2
 
 dataset = "wds/vtab/svhn"
 if dataset.startswith("wds/"):
-        dataset_name = dataset.replace("wds/", "", 1)
+    dataset_name = dataset.replace("wds/", "", 1)
 else:
     dataset_name = dataset
 dataset_root = "https://huggingface.co/datasets/clip-benchmark/wds_{dataset_cleaned}/tree/main"
