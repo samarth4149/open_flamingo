@@ -24,6 +24,7 @@ from datasets.openimages_common import OpenImagesCommon
 from datasets.openimages_rare import OpenImagesRare
 from datasets.ade20k import ADE20k
 from datasets.image_dataset2 import image_dataset
+from datasets.open_clip_datasets import build_wd_dataset
 
 parser = argparse.ArgumentParser()
 
@@ -284,7 +285,7 @@ def evaluate_captioning(
     if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k", 'imagenet-1k',
                         'cifar-10', 'cifar-100', 'oxford-flower-102', 'stanford-cars', 'rendered-sst2', 'eurosat_clip',
                         'mnist', 'oxford-iiit-pets', 'gtsrb', 'resisc45_clip', 'dtd', 'fgvc-aircraft-2013b-variants102',
-                        'caltech-101', 'country211']:
+                        'caltech-101', 'country211'] or dataset_name.startswith('wds/'):
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection
@@ -304,6 +305,9 @@ def evaluate_captioning(
         elif args.dataset_name == 'imagenet-1k':
             # image classification datasets
             dataset_func = image_dataset
+            data_split = None
+        elif args.dataset_name.startswith('wds/'):
+            dataset_func = build_wd_dataset
             data_split = None
         else:
             dataset_func = image_dataset
@@ -325,6 +329,9 @@ def evaluate_captioning(
             def image_transform(image, target):
                 modified_image = eval_model.image_processor(image)
                 return modified_image, target
+            if args.dataset_name.startswith('wds/'):
+                image_transform = eval_model.image_processor
+
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=image_transform, dataset_name=args.dataset_name
             )
@@ -334,14 +341,23 @@ def evaluate_captioning(
         raise ValueError('Dataset %s is not supported' % dataset_name)
 
 
-    class_names = test_dataset.classnames
+    if dataset_name.startswith('wds/'):
+        class_names = test_dataset.classes
+    else:
+        class_names = test_dataset.classnames
+
     if args.split_id is not None and args.num_splits is not None:
         dataset_length = len(test_dataset)
         split_size = (dataset_length - 1) // args.num_splits + 1
         split_range = list(range(args.split_id * split_size, min([dataset_length, (args.split_id + 1)* split_size])))
         test_dataset = torch.utils.data.Subset(test_dataset, split_range)
 
-    test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
+    if isinstance(test_dataset, torch.utils.data.IterableDataset):
+        test_dataloader = torch.utils.data.DataLoader(
+                            test_dataset.batched(args.batch_size), batch_size=None,
+                            shuffle=False)
+    else:
+        test_dataloader = DataLoader(test_dataset, args.batch_size,  shuffle=False, drop_last=False)
 
     targets = []
     preds = []
@@ -383,11 +399,11 @@ def evaluate_captioning(
         targets.append(batch_target)
         preds.append(outputs)
         count += 1
-    #     if count >= 1:
-    #         break
-    #
-    # import pdb
-    # pdb.set_trace()
+        if count >= 1:
+            break
+
+    import pdb
+    pdb.set_trace()
     # compute mAP with the ground truth label
     preds = torch.exp(torch.cat(preds, dim=0)).float()
     targets = torch.cat(targets, dim=0)
