@@ -371,6 +371,8 @@ def evaluate_captioning(
         #     pdb.set_trace()
         #     batch_images = batch['image']
         #     batch_target = batch['class_id']
+        elif dataset_name.startswith('wds/'):
+            batch_images, batch_target = batch
         else:
             batch_images = batch[0]
             batch_target = batch[1][0]
