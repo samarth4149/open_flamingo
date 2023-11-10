@@ -38,9 +38,14 @@ dataloader =torch.utils.data.DataLoader (
                 dataset.batched(10), batch_size=None,
                 shuffle=False, num_workers=1,
             )
-# collate_fn = get_dataset_collate_fn(dataset)
-for images, target in tqdm(dataloader):
+# # collate_fn = get_dataset_collate_fn(dataset)
+# for images, target in tqdm(dataloader):
+#
+for batch in tqdm(iter(dataloader)):
+    images, target = batch
     print(images.shape)
     import pdb
+
     pdb.set_trace()
+
 
