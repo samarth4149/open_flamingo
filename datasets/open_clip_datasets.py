@@ -32,6 +32,6 @@ dataset = build_dataset(
     custom_classname_file="en_classnames.json",
     wds_cache_dir=None,
 )
-collate_fn = get_dataset_collate_fn(dataset)
+# collate_fn = get_dataset_collate_fn(dataset)
 import pdb
 pdb.set_trace()
