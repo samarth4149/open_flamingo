@@ -1,7 +1,7 @@
 import torch
 from clip_benchmark.datasets.builder import build_dataset, get_dataset_collate_fn, get_dataset_default_task, dataset_collection, get_dataset_collection_from_file
 from torchvision.transforms import v2
-
+import torch.utils.data
 
 dataset = "wds/vtab/svhn"
 if dataset.startswith("wds/"):
@@ -32,6 +32,10 @@ dataset = build_dataset(
     custom_classname_file="en_classnames.json",
     wds_cache_dir=None,
 )
+dataloader = torch.utils.data.DataLoader(
+                dataset.batched(10), batch_size=None,
+                shuffle=False, num_workers=1,
+            )
 # collate_fn = get_dataset_collate_fn(dataset)
 import pdb
 pdb.set_trace()
