@@ -204,8 +204,8 @@ class LLaVA_v1_5():
         batch_images = batch_images['pixel_values'][0]
         class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
-        import pdb
-        pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
         prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
         with torch.inference_mode():
             precomputed_output = self.model(
