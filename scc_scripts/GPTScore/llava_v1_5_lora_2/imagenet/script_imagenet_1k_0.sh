@@ -39,6 +39,6 @@ module load gcc
 cd /projectnb/ivc-ml/sunxm/code/open_flamingo
 
 echo 'activating virtual environment'
-conda activate llava
+conda activate llava2
 
 python GPTScore_eval.py  --model_path /projectnb/ivc-ml/sunxm/ckpt/llava-v1.5-13b-lora/ --model_base /projectnb/ivc-ml/sunxm/ckpt/vicuna-13b-v1.5/  --model_name llava-v1.5-13b-lora  --model llava_v1_5  --coco_prompts " a photo of a "  --coco_dataroot    ../../datasets/  --batch_size 8 --dataset_name imagenet-1k --num_splits 10 --split_id 0 --output_dir ./snapshots/imagenet
