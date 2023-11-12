@@ -26,8 +26,8 @@ for split in range(num_splits):
     preds.append(pred)
     targets.append(target)
 
-preds = np.concatenate(preds, axis=1)
-targets = np.concatenate(targets, axis=1)
+preds = np.concatenate(preds, axis=0)
+targets = np.concatenate(targets, axis=0)
 preds = torch.from_numpy(preds)
 targets = torch.from_numpy(targets)
 acc = top_k_accuracy(preds.cpu(), targets, k=1)
