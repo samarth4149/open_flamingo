@@ -15,7 +15,7 @@ from minigpt4.common.registry import registry
 from minigpt4.conversation.conversation import Chat, CONV_VISION
 from transformers import StoppingCriteria, StoppingCriteriaList
 from models.prompt_learning import PromptLearner
-
+from tqdm import tqdm
 import re
 
 def split_string(s, delimiters):
@@ -137,7 +137,7 @@ class MiniGPT4():
         class_probs = []
         prefix_outputs = None
         # class_names = ['tench', 'sink']
-        for class_name in class_names:
+        for class_name in tqdm(class_names):
             messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
             sentence = self.create_prompt(system, sep, messages)[:-3]
 
