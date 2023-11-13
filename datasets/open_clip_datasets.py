@@ -48,13 +48,17 @@ from tqdm import tqdm
 #
 #     pdb.set_trace()
 
-def build_wd_dataset(dataset_name, transform, **kwargs):
+def build_wd_dataset(dataset_name, transform, root=None, **kwargs):
     dataset = dataset_name
     if dataset.startswith("wds/"):
         dataset_name = dataset.replace("wds/", "", 1)
     else:
         dataset_name = dataset
-    dataset_root = "https://huggingface.co/datasets/clip-benchmark/wds_{dataset_cleaned}/tree/main"
+    # dataset_root = "https://huggingface.co/datasets/clip-benchmark/wds_{dataset_cleaned}/tree/main"
+    if root is None:
+        dataset_root = "https://huggingface.co/datasets/clip-benchmark/wds_{dataset_cleaned}/tree/main"
+    else:
+        dataset_root = root
     dataset_root = dataset_root.format(dataset=dataset_name, dataset_cleaned=dataset_name.replace("/", "-"))
     split = 'test'
     task = get_dataset_default_task(dataset_name)
