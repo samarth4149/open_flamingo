@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#$ -N dsprites_label_orientation
+#$ -N smallnorb_label_elevation
 
 #$ -m bea
 
