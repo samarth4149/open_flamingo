@@ -311,7 +311,9 @@ def evaluate_captioning(
             data_split = None
         else:
             dataset_func = image_dataset
-            data_split = None
+            data_split = 'test'
+            if args.split_id is not None:
+                data_split += '_%d' % args.split_id
 
         if args.model == 'open_flamingo':
             test_dataset = dataset_func(
