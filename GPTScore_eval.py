@@ -308,12 +308,12 @@ def evaluate_captioning(
             data_split = None
         elif args.dataset_name.startswith('wds/'):
             dataset_func = build_wd_dataset
-            data_split = None
-        else:
-            dataset_func = image_dataset
             data_split = 'test'
             if args.split_id is not None:
                 data_split += '_%d' % args.split_id
+        else:
+            dataset_func = image_dataset
+            data_split = None
 
         if args.model == 'open_flamingo':
             test_dataset = dataset_func(

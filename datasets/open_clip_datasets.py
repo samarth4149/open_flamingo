@@ -48,7 +48,7 @@ from tqdm import tqdm
 #
 #     pdb.set_trace()
 
-def build_wd_dataset(dataset_name, transform,data_split , root=None, **kwargs):
+def build_wd_dataset(dataset_name, transform, data_split , root=None, **kwargs):
     dataset = dataset_name
     if dataset.startswith("wds/"):
         dataset_name = dataset.replace("wds/", "", 1)
