@@ -16,7 +16,7 @@ def top_k_accuracy(pred, targets, k=1):
 
     return (correct / len(targets)).cpu().item()
 
-dataroot = '/projectnb/ivc-ml/sunxm/code/open_flamingo/snapshot/GPTScore/minigpt4/imagenet'
+dataroot = '/projectnb/ivc-ml/sunxm/code/open_flamingo/snapshots/GPTScore/sun397'
 num_splits = 10
 for split in range(num_splits):
     pred_path = os.path.join(dataroot, 'pred_%d.npy' % split)
