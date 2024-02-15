@@ -11,10 +11,6 @@ import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score
 from tqdm import tqdm
-from minigpt4.eval import MiniGPT4
-from minigpt4_v2.eval_llama2 import MiniGPT4_llama2
-from llava.eval import LLaVA
-from llava_v1_5.eval import LLaVA_v1_5
 
 from open_flamingo.eval.eval_model import BaseEvalModel
 
@@ -25,6 +21,9 @@ from datasets.openimages_rare import OpenImagesRare
 from datasets.ade20k import ADE20k
 from datasets.image_dataset2 import image_dataset
 from datasets.open_clip_datasets import build_wd_dataset
+
+from datasets.sugar_crepe import SugarCrepe
+import json
 
 parser = argparse.ArgumentParser()
 
@@ -72,6 +71,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--save_scores',
+    action='store_true',
+    help='whether to save the scores'
+)
+
+parser.add_argument(
         "--options",
         nargs="+",
         help="override some settings in the used config, the key-value pair "
@@ -85,6 +90,7 @@ parser.add_argument(
         "--output_dir",
         type=str,
         help="the output directory path",
+        default='expts/tmp'
     )
 
 parser.add_argument(
@@ -108,6 +114,13 @@ parser.add_argument(
         default=None,
         help="the task identifier for minigpt-v"
     )
+
+parser.add_argument(
+    '--get_ptrain',
+    action='store_true',
+    help='whether to get the p_train',
+    default=False
+)
 
 parser.add_argument(
         "--split_id",
@@ -138,24 +151,36 @@ def main():
         leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     }
     if args.model == 'llava':
+        from llava.eval import LLaVA
         eval_model = LLaVA(model_args['model_name'])
     elif args.model == 'llava_v1_5':
+        from llava_v1_5.eval import LLaVA_v1_5
         eval_model = LLaVA_v1_5(model_name=model_args['model_name'], model_path=model_args['model_path'], model_base=model_args.get('model_base', None))
     elif args.model == 'minigpt4':
+        from minigpt4.eval import MiniGPT4
         from minigpt4.common.config import Config
         cfg = Config(args)
         eval_model = MiniGPT4(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
     elif args.model in ['minigpt4_llama2', 'minigpt_v']:
+        from minigpt4_v2.eval_llama2 import MiniGPT4_llama2
         from minigpt4_v2.common.config import Config
         cfg = Config(args)
         eval_model = MiniGPT4_llama2(cfg.model_cfg, cfg.datasets_cfg.cc_sbu_align.vis_processor.train, int(model_args["device"]))
     else:
         module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
         eval_model = module.EvalModel(model_args)
-
-
-    evaluate_captioning(args, eval_model=eval_model, dataset_name=args.dataset_name)
-
+    
+    results_dict = {}
+    for dataset_name in args.dataset_name.split(','):
+        print(f'Running eval for {dataset_name}...')
+        metrics = evaluate_captioning(args, eval_model=eval_model, dataset_name=dataset_name)
+        results_dict[dataset_name] = metrics
+    
+    if args.output_dir is not None:
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+        
+    json.dump(results_dict, open(os.path.join(args.output_dir, 'results.json'), 'w'), indent=4)
 
 def get_random_indices(num_samples, query_set_size, full_dataset, seed):
     if num_samples + query_set_size > len(full_dataset):
@@ -280,12 +305,12 @@ def evaluate_captioning(
         float: CIDEr score
 
     """
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    # if not os.path.exists(args.output_dir):
+    #     os.makedirs(args.output_dir)
     if dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k", 'imagenet-1k',
                         'cifar-10', 'cifar-100', 'oxford-flower-102', 'stanford-cars', 'rendered-sst2', 'eurosat_clip',
                         'mnist', 'oxford-iiit-pets', 'gtsrb', 'resisc45_clip', 'dtd', 'fgvc-aircraft-2013b-variants102',
-                        'caltech-101', 'country211'] or dataset_name.startswith('wds/'):
+                        'caltech-101', 'country211'] or dataset_name.startswith('wds/') or dataset_name.startswith('sugarcrepe'):
         # build test dataset
         if dataset_name == 'coco':
             dataset_func = CocoDetection
@@ -306,6 +331,9 @@ def evaluate_captioning(
             # image classification datasets
             dataset_func = image_dataset
             data_split = None
+        elif dataset_name.startswith('sugarcrepe'):
+            dataset_func = SugarCrepe
+            data_split = dataset_name.split('/')[1]
         elif args.dataset_name.startswith('wds/'):
             dataset_func = build_wd_dataset
             data_split = 'test'
@@ -331,7 +359,7 @@ def evaluate_captioning(
             def image_transform(image, target):
                 modified_image = eval_model.image_processor(image)
                 return modified_image, target
-            if args.dataset_name.startswith('wds/'):
+            if dataset_name.startswith('wds/') or dataset_name.startswith('sugarcrepe'):
                 image_transform = eval_model.image_processor
 
             test_dataset = dataset_func(
@@ -341,10 +369,11 @@ def evaluate_captioning(
             raise ValueError(f'model {args.model} is not supported')
     else:
         raise ValueError('Dataset %s is not supported' % dataset_name)
-
-
+    
     if dataset_name.startswith('wds/'):
         class_names = test_dataset.classes
+    elif dataset_name.startswith('sugarcrepe'):
+        class_names = None
     else:
         class_names = test_dataset.classnames
 
@@ -380,22 +409,41 @@ def evaluate_captioning(
                 for image in batch_images:
                     batch_images_.append(image['pixel_values'][0])
                 batch_images = {'pixel_values': [torch.stack(batch_images_, dim=0)]}
+        elif dataset_name.startswith('sugarcrepe'):
+            batch_images, batch_captions = batch
+            if 'llava' in args.model or 'blip' in args.model:
+                batch_target = torch.zeros(len(batch_images['pixel_values'][0]))
+            else:
+                batch_target = torch.zeros(len(batch_images))
         else:
             batch_images = batch[0]
             batch_target = batch[1][0]
-
+            
         if args.model == 'open_flamingo':
             batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
         prompt = args.coco_prompts
-        batch_text = [f"<image>{prompt} "] * len(batch_images)
 
         if args.model in ['minigpt4', 'minigpt4_llama2', 'llava', 'llava_v1_5']:
-            outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
+            if args.get_ptrain:
+                outputs = eval_model.get_ptrain(image_shape=batch_images.shape[1:], batch_captions=batch_captions, prompt=prompt)
+            elif args.dataset_name.startswith('sugarcrepe'):
+                outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions, prompt=prompt)
+            else:
+                outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
         elif args.model in ['minigpt_v']:
-            outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt,
-                                              task=args.task)
+            if args.get_ptrain:
+                outputs = eval_model.get_ptrain(image_shape=batch_images.shape[1:], batch_captions=batch_captions, prompt=prompt)
+            elif args.dataset_name.startswith('sugarcrepe'):
+                outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions, prompt=prompt, task=args.task)
+            else:
+                outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt,
+                                                  task=args.task)
+        elif args.model in ['blip']:
+            if args.dataset_name.startswith('sugarcrepe'):
+                outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions, prompt=prompt)
         else:
+            batch_text = [f"<image>{prompt} "] * len(batch_images['pixel_values'][0])
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
@@ -403,7 +451,7 @@ def evaluate_captioning(
                 num_beams=num_beams,
                 length_penalty=length_penalty,
             )
-
+            
         # compute mAP with the ground truth label
         targets.append(batch_target)
         preds.append(outputs)
@@ -412,20 +460,28 @@ def evaluate_captioning(
         #     break
 
     # compute mAP with the ground truth label
-    preds = torch.exp(torch.cat(preds, dim=0)).float()
+    # preds = torch.exp(torch.cat(preds, dim=0)).float()
+    preds = torch.cat(preds, dim=0)
     targets = torch.cat(targets, dim=0)
-    if args.dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
-        mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
-        print('mAP is %0.2f' % mAP)
-    else:
-        acc = top_k_accuracy(preds.cpu(), targets, k=1)
-        print('Top-1 is %0.2f' % (acc*100))
+    # if args.dataset_name in ["coco", "pascal_voc", "OpenImagesV6Common", "OpenImagesV6Rare", "ADE20k"]:
+    #     mAP = compute_map(y_true=targets.cpu().numpy(), y_pred=preds.cpu().numpy())
+    #     print('mAP is %0.2f' % mAP)
+    #     ret = {'mAP': mAP}
+    # else:
+    acc = top_k_accuracy(preds.cpu(), targets, k=1)
+    print('Top-1 is %0.2f' % (acc*100))
+    ret = {'top-1 acc': acc}
 
-    if args.split_id is not None:
-        np.save(os.path.join(args.output_dir, 'pred_%d.npy' % args.split_id), preds.cpu().numpy())
-        np.save(os.path.join(args.output_dir, 'target_%d.npy' % args.split_id), targets.cpu().numpy())
+    if args.save_scores:
+        dset_extension = '_'.join(dataset_name.split('/'))
+        torch.save(preds.cpu(), os.path.join(args.output_dir, f'preds_{dset_extension}.pt'))
+        # np.save(os.path.join(args.output_dir, 'targets.npy'), targets.cpu().numpy())
+        
+        if args.split_id is not None:
+            np.save(os.path.join(args.output_dir, 'pred_%d.npy' % args.split_id), preds.cpu().numpy())
+            np.save(os.path.join(args.output_dir, 'target_%d.npy' % args.split_id), targets.cpu().numpy())
 
-
+    return ret
 
 if __name__ == "__main__":
     main()

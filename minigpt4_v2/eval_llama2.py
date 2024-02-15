@@ -153,7 +153,7 @@ class MiniGPT4_llama2():
                 self.model.llama_tokenizer(
                     seg, return_tensors="pt", add_special_tokens=i == 0).to(self.device).input_ids
                 # only add bos to the first seg
-                for i, seg in enumerate(sentence_segs)
+                for i, seg in enumerate(sentence_segs) # this should have length 2
             ]
             #
             seg_2nd_token = seg_tokens[1]
@@ -219,6 +219,202 @@ class MiniGPT4_llama2():
             class_probs.append(class_prob)
 
         class_probs = torch.stack(class_probs, dim=-1)
+
+        return class_probs
+    
+    def get_GPTScore1(self, batch_images, batch_captions=None,
+                      system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
+                      sep = "", prompt= 'Describe the image in detail.', task='',):
+        if task != '':
+            raise NotImplementedError("Task is not supported in this function")
+        
+        batch_images = batch_images.to(self.device)
+        image_emb, _ = self.model.encode_img(batch_images)
+        
+        roles = ("<s>[INST] ", " [/INST] ")
+        prefix_length = None
+        prefix_2nd_token = None
+        class_probs = []
+        prefix_outputs = None
+        # class_names = ['tench', 'sink']
+        
+        for captions in batch_captions:
+            sentences = [self.create_prompt(system, sep, [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], cap)]) for cap in captions]
+            sentence_segs = [sentence.split('<ImageHere>') for sentence in sentences]
+
+            seg_tokens = [
+                self.model.llama_tokenizer(
+                    [seg[i] for seg in sentence_segs], return_tensors="pt", add_special_tokens=i == 0, padding='longest').to(self.device).input_ids
+                # only add bos to the first seg
+                for i in range(len(sentence_segs[0])) # this should have length 2
+            ]
+            #
+            seg_2nd_token = seg_tokens[1]
+            try:
+                seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+            except AttributeError:
+                seg_embs = [self.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+
+            embs = [seg_embs[0], image_emb, seg_embs[1]]
+            mixed_embs = torch.cat(embs, dim=1)
+            
+            # overall_length = mixed_embs.shape[1]
+            if prefix_length is None or prefix_2nd_token is None or prefix_outputs is None:
+                prefix_messages = [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], None)]
+                
+                prefix_sentence = self.create_prompt(system, sep, prefix_messages)
+
+                prefix_sentence_segs = prefix_sentence.split('<ImageHere>')
+
+                prefix_seg_tokens = [
+                    self.model.llama_tokenizer(
+                        seg, return_tensors="pt", add_special_tokens=i == 0).to(self.device).input_ids
+                    # only add bos to the first seg
+                    for i, seg in enumerate(prefix_sentence_segs)
+                ]
+                prefix_2nd_token = prefix_seg_tokens[1]
+                try:
+                    prefix_seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+                except AttributeError:
+                    prefix_seg_embs = [self.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+
+                prefix_embs = [self.expand_emb(prefix_seg_embs[0], batch_images.shape[0]), image_emb,
+                        self.expand_emb(prefix_seg_embs[1], batch_images.shape[0])]
+                prefix_mixed_embs = torch.cat(prefix_embs, dim=1)
+
+                prefix_length = prefix_mixed_embs.shape[1]
+                with torch.no_grad():
+                    prefix_outputs = self.model.llama_model(
+                        inputs_embeds=prefix_mixed_embs, use_cache=True
+                    )
+                    precomputed_pkvs = _detach_pkvs(prefix_outputs.past_key_values)
+
+            assert torch.all(torch.eq(seg_2nd_token[: , : prefix_2nd_token.shape[1]], prefix_2nd_token))
+            # compute the length before the grad_truth location
+            with torch.no_grad():
+                outputs = self.model.llama_model(
+                    inputs_embeds=mixed_embs[:, prefix_length:], past_key_values=precomputed_pkvs
+                )
+                # outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
+                outputs_logits = outputs.logits
+                probs = torch.log_softmax(outputs_logits, dim=-1).detach()
+
+            # probs = probs[:, :-1, :]
+            # probs = probs[:, -(overall_length-prefix_length):, :]
+            input_ids = seg_2nd_token[:, prefix_2nd_token.shape[1]:]
+            assert probs.shape[1] == input_ids.shape[1]
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+
+            non_pad_locs = (input_ids != self.model.llama_tokenizer.pad_token_id)
+            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            class_probs.append(class_prob)
+
+        class_probs = torch.stack(class_probs, dim=-1)
+
+        return class_probs
+            
+    def get_ptrain(
+        self, image_shape, batch_captions=None,
+        system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
+        sep = "", prompt= 'Describe the image in detail.', task='',):
+        """
+        This is p_train computed using gaussian noise images as done in VisualGPTScore https://arxiv.org/pdf/2306.01879.pdf 
+        """
+        
+        if task != '':
+            raise NotImplementedError("Task is not supported in this function")
+        
+        batch_size = len(batch_captions[0])
+        mean_gaussian = 0.45
+        std_gaussian = 0.25
+        num_imgs_per_cap = 3
+        
+        batch_images = torch.normal(mean=mean_gaussian, std=std_gaussian, size=(batch_size*num_imgs_per_cap,) + image_shape).to(self.device)
+        image_emb, _ = self.model.encode_img(batch_images)
+        
+        roles = ("<s>[INST] ", " [/INST] ")
+        prefix_length = None
+        prefix_2nd_token = None
+        class_probs = []
+        prefix_outputs = None
+        # class_names = ['tench', 'sink']
+        
+        for captions in batch_captions:
+            sentences = [3*[self.create_prompt(system, sep, [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], cap)])] for cap in captions]
+            sentences = [item for sublist in sentences for item in sublist] # just flattening
+            
+            sentence_segs = [sentence.split('<ImageHere>') for sentence in sentences]
+
+            seg_tokens = [
+                self.model.llama_tokenizer(
+                    [seg[i] for seg in sentence_segs], return_tensors="pt", add_special_tokens=i == 0, padding='longest').to(self.device).input_ids
+                # only add bos to the first seg
+                for i in range(len(sentence_segs[0])) # this should have length 2
+            ]
+            #
+            seg_2nd_token = seg_tokens[1]
+            try:
+                seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+            except AttributeError:
+                seg_embs = [self.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+
+            embs = [seg_embs[0], image_emb, seg_embs[1]]
+            mixed_embs = torch.cat(embs, dim=1)
+            
+            # overall_length = mixed_embs.shape[1]
+            if prefix_length is None or prefix_2nd_token is None or prefix_outputs is None:
+                prefix_messages = [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], None)]
+                
+                prefix_sentence = self.create_prompt(system, sep, prefix_messages)
+
+                prefix_sentence_segs = prefix_sentence.split('<ImageHere>')
+
+                prefix_seg_tokens = [
+                    self.model.llama_tokenizer(
+                        seg, return_tensors="pt", add_special_tokens=i == 0).to(self.device).input_ids
+                    # only add bos to the first seg
+                    for i, seg in enumerate(prefix_sentence_segs)
+                ]
+                prefix_2nd_token = prefix_seg_tokens[1]
+                try:
+                    prefix_seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+                except AttributeError:
+                    prefix_seg_embs = [self.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+
+                prefix_embs = [self.expand_emb(prefix_seg_embs[0], batch_images.shape[0]), image_emb,
+                        self.expand_emb(prefix_seg_embs[1], batch_images.shape[0])]
+                prefix_mixed_embs = torch.cat(prefix_embs, dim=1)
+
+                prefix_length = prefix_mixed_embs.shape[1]
+                with torch.no_grad():
+                    prefix_outputs = self.model.llama_model(
+                        inputs_embeds=prefix_mixed_embs, use_cache=True
+                    )
+                    precomputed_pkvs = _detach_pkvs(prefix_outputs.past_key_values)
+
+            assert torch.all(torch.eq(seg_2nd_token[: , : prefix_2nd_token.shape[1]], prefix_2nd_token))
+            # compute the length before the grad_truth location
+            with torch.no_grad():
+                outputs = self.model.llama_model(
+                    inputs_embeds=mixed_embs[:, prefix_length:], past_key_values=precomputed_pkvs
+                )
+                # outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
+                outputs_logits = outputs.logits
+                probs = torch.log_softmax(outputs_logits, dim=-1).detach()
+
+            # probs = probs[:, :-1, :]
+            # probs = probs[:, -(overall_length-prefix_length):, :]
+            input_ids = seg_2nd_token[:, prefix_2nd_token.shape[1]:]
+            assert probs.shape[1] == input_ids.shape[1]
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+
+            non_pad_locs = (input_ids != self.model.llama_tokenizer.pad_token_id)
+            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            class_probs.append(class_prob)
+
+        class_probs = torch.stack(class_probs, dim=-1)
+        # take avg for the scores over the 3 images
+        class_probs = class_probs.view(-1, num_imgs_per_cap, class_probs.shape[1]).mean(dim=1)
 
         return class_probs
 

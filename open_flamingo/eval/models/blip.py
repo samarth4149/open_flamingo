@@ -76,6 +76,7 @@ class EvalModel(BaseEvalModel):
         num_beams: int,
         length_penalty: float,
     ) -> List[str]:
+        batch_images = batch_images['pixel_values'][0]
         encodings = self.processor.tokenizer(
             batch_text,
             padding="longest",
@@ -85,7 +86,7 @@ class EvalModel(BaseEvalModel):
         )
         input_ids = encodings["input_ids"]
         attention_mask = encodings["attention_mask"]
-
+        
         with torch.inference_mode():
             outputs = self.model.generate(
                 # self._prepare_images(batch_images).to(self.device),
@@ -98,6 +99,58 @@ class EvalModel(BaseEvalModel):
             )
 
         return self.processor.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+    def get_GPTScore1(self, batch_images, batch_captions, prompt):
+        batch_images = batch_images['pixel_values'][0]
+        
+        # TODO : implement without caching first
+        class_probs = []
+        for captions in batch_captions:
+            inp_captions = [f"<image>{prompt} " for c in captions]
+            
+            encodings = self.processor.tokenizer(
+                inp_captions,
+                padding="longest",
+                truncation=True,
+                return_tensors="pt",
+                max_length=2000,
+            )
+            
+            input_ids = encodings["input_ids"]
+            attention_mask = encodings["attention_mask"]
+            
+            encodings = self.processor.tokenizer(
+                captions,
+                padding="longest",
+                # truncation=True,
+                return_tensors="pt",
+                max_length=2000,
+            )
+            decoder_input_ids = encodings["input_ids"].to(self.device)
+            decoder_attention_mask = encodings["attention_mask"]
+            
+            with torch.inference_mode():
+                outputs = self.model(
+                    pixel_values=batch_images.to(self.device),
+                    input_ids=input_ids.to(self.device),
+                    attention_mask=attention_mask.to(self.device),
+                    decoder_input_ids=decoder_input_ids,
+                    decoder_attention_mask=decoder_attention_mask.to(self.device),
+                    return_dict=True,
+                )
+                output_logits = outputs.logits
+                probs = torch.log_softmax(output_logits, dim=-1).detach()
+                
+            gen_probs = torch.gather(probs, 2, decoder_input_ids[:, :, None]).squeeze(-1)
+            
+            # remove padding tokens
+            # non_pad_locs = (input_ids != self.tokenizer.pad_token_id) & (input_ids != self.tokenizer._convert_token_to_id('.'))
+            non_pad_locs = (decoder_input_ids != self.processor.tokenizer.pad_token_id)
+            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            class_probs.append(class_prob)
+        
+        class_probs = torch.stack(class_probs, dim=-1)
+        return class_probs
 
     def get_vqa_prompt(self, question, answer=None) -> str:
         return (

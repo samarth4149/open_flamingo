@@ -8,6 +8,7 @@ model:
   ckpt: '/projectnb/ivc-ml/sunxm/ckpt/minigpt4_weights/minigptv2_checkpoint.pth'
   lora_r: 64
   lora_alpha: 16
+  # vit_precision: 32
 
 
 datasets:

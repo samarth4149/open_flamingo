@@ -241,3 +241,47 @@ class LLaVA_v1_5():
         class_probs = torch.stack(class_probs, dim=-1)
 
         return class_probs
+    
+    def get_GPTScore1(self, batch_images, batch_captions, 
+                     prompt='Describe the image in detail.',):
+        batch_images = batch_images['pixel_values'][0]
+        class_probs = []
+        prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
+        # import pdb
+        # pdb.set_trace()
+        prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
+        with torch.inference_mode():
+            precomputed_output = self.model(
+                prefix_input_ids,
+                images=batch_images.half().cuda(),
+                use_cache=True
+            )
+            precomputed_pkvs = _detach_pkvs(precomputed_output.past_key_values)
+            
+        for captions in batch_captions:
+            inputs = self.tokenizer(captions, return_tensors="pt", padding='longest')
+            input_ids = inputs.input_ids.cuda()
+            with torch.inference_mode():
+                outputs = self.model(
+                    input_ids,
+                    past_key_values= precomputed_pkvs,
+                )
+                # outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
+                output_logits = outputs.logits
+                probs = torch.log_softmax(output_logits, dim=-1).detach()
+
+            # probs = probs[:, :-1, :] # removes end of sentence token?
+            # probs = probs[:, -class_name_token_len:, :]
+            assert probs.shape[1] == input_ids.shape[1]
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+            
+            # remove padding tokens
+            # non_pad_locs = (input_ids != self.tokenizer.pad_token_id) & (input_ids != self.tokenizer._convert_token_to_id('.'))
+            non_pad_locs = (input_ids != self.tokenizer.pad_token_id)
+            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            class_probs.append(class_prob)
+            
+        class_probs = torch.stack(class_probs, dim=-1)
+
+        return class_probs
+    

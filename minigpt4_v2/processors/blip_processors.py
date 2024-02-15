@@ -109,7 +109,8 @@ class Blip2ImageTrainProcessor(BlipImageBaseProcessor):
             max_scale=max_scale,
         )
 
-
+def _convert_to_rgb(image):
+    return image.convert('RGB')
 @registry.register_processor("blip2_image_eval")
 class Blip2ImageEvalProcessor(BlipImageBaseProcessor):
     def __init__(self, image_size=224, mean=None, std=None):
@@ -117,6 +118,7 @@ class Blip2ImageEvalProcessor(BlipImageBaseProcessor):
 
         self.transform = transforms.Compose(
             [
+                _convert_to_rgb,
                 transforms.Resize(
                     (image_size, image_size), interpolation=InterpolationMode.BICUBIC
                 ),

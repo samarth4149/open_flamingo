@@ -138,3 +138,6 @@ wandb
 
 # Pyre type checker
 .pyre/
+
+# expts
+expts/

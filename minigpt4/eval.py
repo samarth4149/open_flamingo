@@ -126,7 +126,7 @@ class MiniGPT4():
 
         return new_predictions
 
-    def get_GPTScore(self, batch_images, class_names,
+    def get_GPTScore(self, batch_images, class_names=None,
                     system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
                     sep = "###", prompt= 'a photo of '):
         batch_images = batch_images.to(self.device)
@@ -136,8 +136,8 @@ class MiniGPT4():
         prefix_2nd_token = None
         class_probs = []
         prefix_outputs = None
-        # class_names = ['tench', 'sink']
-        for class_name in tqdm(class_names):
+        
+        for class_name in class_names:
             messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
             sentence = self.create_prompt(system, sep, messages)[:-3]
 
@@ -200,6 +200,87 @@ class MiniGPT4():
             gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
 
             class_prob = gen_probs.mean(dim=-1)
+            class_probs.append(class_prob)
+
+        class_probs = torch.stack(class_probs, dim=-1)
+
+        return class_probs
+
+    def get_GPTScore1(self, batch_images, batch_captions=None, 
+                      system = "Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",
+                      sep = "###", prompt= 'Describe the image in detail.'):
+        batch_images = batch_images.to(self.device)
+        image_emb, _ = self.model.encode_img(batch_images)
+
+        prefix_length = None
+        prefix_2nd_token = None
+        class_probs = []
+        prefix_outputs = None
+        
+        for captions in batch_captions:
+            # messages= [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", class_name)]
+            sentences = [self.create_prompt(system, sep, [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", cap)])[:-3] for cap in captions]
+            sentence_segs = [sentence.split('<ImageHere>') for sentence in sentences]
+
+            seg_tokens = [
+                self.model.llama_tokenizer(
+                    [seg[i] for seg in sentence_segs], return_tensors="pt", add_special_tokens=i == 0, padding='longest').to(self.device).input_ids
+                # only add bos to the first seg
+                for i in range(len(sentence_segs[0]))
+            ] # list of B x seg_length tensors
+            #
+            seg_2nd_token = seg_tokens[1] # B x 1
+
+            seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in seg_tokens]
+            embs = [seg_embs[0], image_emb, seg_embs[1]]
+            mixed_embs = torch.cat(embs, dim=1)
+            # after this everything is the same as get_GPTScore() function
+            
+            overall_length = mixed_embs.shape[1]
+            if prefix_length is None or prefix_2nd_token is None or prefix_outputs is None:
+                prefix_messages = [("Human", "<Img><ImageHere></Img> %s" % prompt), ("Assistant", None)]
+                prefix_sentence = self.create_prompt(system, sep, prefix_messages)
+
+                prefix_sentence_segs = prefix_sentence.split('<ImageHere>')
+
+                prefix_seg_tokens = [
+                    self.model.llama_tokenizer(
+                        seg, return_tensors="pt", add_special_tokens=i == 0).to(self.device).input_ids
+                    # only add bos to the first seg
+                    for i, seg in enumerate(prefix_sentence_segs)
+                ]
+                prefix_2nd_token = prefix_seg_tokens[1]
+                prefix_seg_embs = [self.model.llama_model.model.embed_tokens(seg_t) for seg_t in prefix_seg_tokens]
+                prefix_embs = [self.expand_emb(prefix_seg_embs[0], batch_images.shape[0]), image_emb,
+                        self.expand_emb(prefix_seg_embs[1], batch_images.shape[0])]
+                prefix_mixed_embs = torch.cat(prefix_embs, dim=1)
+
+                prefix_length = prefix_mixed_embs.shape[1]
+                with torch.no_grad():
+                    prefix_outputs = self.model.llama_model(
+                        inputs_embeds=prefix_mixed_embs, use_cache=True
+                    )
+                    precomputed_pkvs = _detach_pkvs(prefix_outputs.past_key_values)
+
+            assert torch.all(torch.eq(seg_2nd_token[: , : prefix_2nd_token.shape[1]], prefix_2nd_token))
+            # compute the length before the grad_truth location
+            with torch.no_grad():
+                outputs = self.model.llama_model(
+                    inputs_embeds=mixed_embs[:, prefix_length:], past_key_values=precomputed_pkvs
+                )
+                # outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
+                output_logits = outputs.logits
+                probs = torch.log_softmax(output_logits, dim=-1).detach()
+
+            # probs = probs[:, :-1, :]
+            # probs = probs[:, -(overall_length-prefix_length):, :]
+            input_ids = seg_2nd_token[:, prefix_2nd_token.shape[1]:]
+            assert probs.shape[1] == input_ids.shape[1]
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+
+            non_pad_locs = (input_ids != self.model.llama_tokenizer.pad_token_id)
+            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            # class_prob = gen_probs.mean(dim=-1)
             class_probs.append(class_prob)
 
         class_probs = torch.stack(class_probs, dim=-1)
