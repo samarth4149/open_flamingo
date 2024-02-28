@@ -319,6 +319,7 @@ class MiniGPT4_llama2():
         sep = "", prompt= 'Describe the image in detail.', task='',):
         """
         This is p_train computed using gaussian noise images as done in VisualGPTScore https://arxiv.org/pdf/2306.01879.pdf 
+        TODO : check why this function is somewhat slow
         """
         
         if task != '':
@@ -418,6 +419,64 @@ class MiniGPT4_llama2():
 
         return class_probs
 
+    def get_ptrain1(self, batch_captions=None,
+        system = "Using your knowledge of the visual world and optionally an image, follow the next instructions.",
+        sep = "", prompt= 'Describe the image in detail.', task='',):
+        """
+        This function does not use any image and computes only the language prior for the model.
+        """
+        if task != '':
+            raise NotImplementedError("Task is not supported in this function")
+        
+        roles = ("<s>[INST] ", " [/INST] ")
+        prefix_length = None
+        prefix_2nd_token = None
+        class_probs = []
+        prefix_outputs = None
+        
+        for captions in batch_captions:
+            sentences = [self.create_prompt(system, sep, [(roles[0], prompt), (roles[1], cap)]) for cap in captions]            
+            sentence_tokens = self.model.llama_tokenizer(sentences, return_tensors="pt", add_special_tokens=True, padding='longest').to(self.device).input_ids
+            try:
+                sentence_embs = self.model.llama_model.model.embed_tokens(sentence_tokens)
+            except AttributeError:
+                sentence_embs = self.model.embed_tokens(sentence_tokens)
+            
+            if prefix_length is None or prefix_2nd_token is None or prefix_outputs is None:
+                prefix_sentence = self.create_prompt(system, sep, [(roles[0], prompt), (roles[1], None)])
+                prefix_sentence_tokens = self.model.llama_tokenizer(prefix_sentence, return_tensors="pt", add_special_tokens=True, padding='longest').to(self.device).input_ids
+                try:
+                    prefix_embs = self.expand_emb(self.model.llama_model.model.embed_tokens(prefix_sentence_tokens), len(captions))
+                except AttributeError:
+                    prefix_embs = self.expand_emb(self.model.embed_tokens(prefix_sentence_tokens), len(captions))
+                prefix_length = prefix_embs.shape[1]
+                
+                with torch.no_grad():
+                    prefix_outputs = self.model.llama_model(
+                        inputs_embeds=prefix_embs, use_cache=True
+                    )
+                    precomputed_pkvs = _detach_pkvs(prefix_outputs.past_key_values)
+                
+            with torch.no_grad():
+                outputs = self.model.llama_model(
+                    inputs_embeds=sentence_embs[:, prefix_length:], past_key_values=precomputed_pkvs
+                )
+                # outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
+                outputs_logits = outputs.logits
+                probs = torch.log_softmax(outputs_logits, dim=-1).detach()
+            
+            input_ids = sentence_tokens[:, prefix_length:]
+            assert probs.shape[1] == input_ids.shape[1]
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+
+            non_pad_locs = (input_ids != self.model.llama_tokenizer.pad_token_id)
+            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            class_probs.append(class_prob)
+
+        class_probs = torch.stack(class_probs, dim=-1)
+        
+        return class_probs
+                
 
     def get_prompt_outputs(self, batch_images,
                     system="Give the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my questions.",

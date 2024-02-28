@@ -29,19 +29,24 @@ if __name__ == '__main__':
     #         '--output_dir', 'expts/sugarcrepe_clip_vit-l-14_openai',
     #         ]
     
-    cmd += ['--batch_size', '8',
-            '--model', 'minigpt_v',
-            '--cfg-path', cfg_path,
-            '--output_dir', 'expts/sugarcrepe_minigpt_v2_ptrain',
-            '--get_ptrain',
-            ]
+    # cmd += ['--batch_size', '8',
+    #         '--model', 'minigpt_v',
+    #         '--cfg-path', cfg_path,
+    #         '--output_dir', 'expts/sugarcrepe_minigpt_v2_ptrain_language_only',
+    #         '--ptrain', 'language_only',
+    #         ]
     
     # cmd += ['--batch_size', '32',
     #         '--model', 'blip',
     #         '--processor_path', '/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco',
     #         '--lm_path', '/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco',
-    #         '--lm_path', '/projectnb/ivc-ml/sunxm/ckpt/blip2-flan-t5-xl-coco',
     #         '--output_dir', 'expts/sugarcrepe_blip2-flan-t5-xl-coco',]
+    
+    cmd += ['--batch_size', '32',
+            '--model', 'old_blip',
+            '--processor_path', 'Salesforce/blip-image-captioning-large',
+            '--lm_path', 'Salesforce/blip-image-captioning-large',
+            '--output_dir', 'expts/sugarcrepe_old_blip_large',]
 #     cmd += ['--batch_size', '32',
 #             '--model', 'minigpt4',
 #             '--cfg-path', cfg_path,

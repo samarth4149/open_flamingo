@@ -116,10 +116,10 @@ parser.add_argument(
     )
 
 parser.add_argument(
-    '--get_ptrain',
-    action='store_true',
-    help='whether to get the p_train',
-    default=False
+    '--ptrain',
+    default=None,
+    help='What kind of p_train to get (will compute GPTScore if not specified)',
+    choices=['gaussian', 'language_only']
 )
 
 parser.add_argument(
@@ -170,15 +170,15 @@ def main():
         module = importlib.import_module(f"open_flamingo.eval.models.{args.model}")
         eval_model = module.EvalModel(model_args)
     
+    if args.output_dir is not None:
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+    
     results_dict = {}
     for dataset_name in args.dataset_name.split(','):
         print(f'Running eval for {dataset_name}...')
         metrics = evaluate_captioning(args, eval_model=eval_model, dataset_name=dataset_name)
         results_dict[dataset_name] = metrics
-    
-    if args.output_dir is not None:
-        if not os.path.exists(args.output_dir):
-            os.makedirs(args.output_dir)
         
     json.dump(results_dict, open(os.path.join(args.output_dir, 'results.json'), 'w'), indent=4)
 
@@ -347,7 +347,7 @@ def evaluate_captioning(
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.image_processor, dataset_name=args.dataset_name
             )
-        elif args.model == 'blip':
+        elif args.model in ['blip', 'old_blip']:
             test_dataset = dataset_func(
                 root=args.coco_dataroot, data_split=data_split, transform=eval_model.processor.image_processor, dataset_name=args.dataset_name
             )
@@ -425,23 +425,32 @@ def evaluate_captioning(
         prompt = args.coco_prompts
 
         if args.model in ['minigpt4', 'minigpt4_llama2', 'llava', 'llava_v1_5']:
-            if args.get_ptrain:
-                outputs = eval_model.get_ptrain(image_shape=batch_images.shape[1:], batch_captions=batch_captions, prompt=prompt)
+            if args.ptrain:
+                if args.ptrain == 'gaussian':
+                    outputs = eval_model.get_ptrain(image_shape=batch_images.shape[1:], batch_captions=batch_captions, prompt=prompt)
+                elif args.ptrain == 'language_only':
+                    outputs = eval_model.get_ptrain1(batch_captions=batch_captions, prompt=prompt)
             elif args.dataset_name.startswith('sugarcrepe'):
                 outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions, prompt=prompt)
             else:
                 outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt)
         elif args.model in ['minigpt_v']:
-            if args.get_ptrain:
-                outputs = eval_model.get_ptrain(image_shape=batch_images.shape[1:], batch_captions=batch_captions, prompt=prompt)
+            if args.ptrain:
+                if args.ptrain == 'gaussian':
+                    outputs = eval_model.get_ptrain(image_shape=batch_images.shape[1:], batch_captions=batch_captions, prompt=prompt)
+                elif args.ptrain == 'language_only':
+                    outputs = eval_model.get_ptrain1(batch_captions=batch_captions, prompt=prompt)
             elif args.dataset_name.startswith('sugarcrepe'):
                 outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions, prompt=prompt, task=args.task)
             else:
                 outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt,
                                                   task=args.task)
-        elif args.model in ['blip']:
+        elif args.model == 'blip':
             if args.dataset_name.startswith('sugarcrepe'):
                 outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions, prompt=prompt)
+        elif args.model == 'old_blip':
+            if args.dataset_name.startswith('sugarcrepe'):
+                outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions)
         else:
             batch_text = [f"<image>{prompt} "] * len(batch_images['pixel_values'][0])
             outputs = eval_model.get_outputs(

@@ -3,7 +3,9 @@ from typing import List
 from PIL import Image
 import torch
 
-from transformers import Blip2Processor, Blip2ForConditionalGeneration
+from transformers import BlipProcessor, BlipForConditionalGeneration, BlipForQuestionAnswering
+from transformers import AutoProcessor
+# from transformers import Blip2Processor, Blip2ForConditionalGeneration
 from open_flamingo.eval.eval_model import BaseEvalModel
 
 
@@ -21,13 +23,13 @@ class EvalModel(BaseEvalModel):
             "processor_path" in model_args
             and "lm_path" in model_args
             and "device" in model_args
-        ), "BLIP-2 requires processor_path, lm_path, and device arguments to be specified"
+        ), "BLIP requires processor_path, lm_path, and device arguments to be specified"
 
         model_args["device"] = int(model_args["device"])
 
         self.device = model_args["device"] if model_args["device"] >= 0 else "cpu"
-        self.processor = Blip2Processor.from_pretrained(model_args["processor_path"])
-        self.model = Blip2ForConditionalGeneration.from_pretrained(
+        self.processor = BlipProcessor.from_pretrained(model_args["processor_path"])
+        self.model = BlipForConditionalGeneration.from_pretrained(
             model_args["lm_path"]
         )
         self.model.to(self.device)
@@ -100,53 +102,50 @@ class EvalModel(BaseEvalModel):
 
         return self.processor.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
-    def get_GPTScore1(self, batch_images, batch_captions, prompt):
+    def get_GPTScore1(self, batch_images, batch_captions):
         batch_images = batch_images['pixel_values'][0]
         
         # TODO : implement without caching first
         class_probs = []
         for captions in batch_captions:
-            inp_captions = [f"<image>{prompt} " for c in captions]
-            
             encodings = self.processor.tokenizer(
-                inp_captions,
+                captions,
                 padding="longest",
                 truncation=True,
                 return_tensors="pt",
                 max_length=2000,
             )
             
-            input_ids = encodings["input_ids"]
-            attention_mask = encodings["attention_mask"]
+            input_ids = encodings["input_ids"].to(self.device)
+            attention_mask = encodings["attention_mask"].to(self.device)
             
-            encodings = self.processor.tokenizer(
-                captions,
-                padding="longest",
-                # truncation=True,
-                return_tensors="pt",
-                max_length=2000,
-            )
-            decoder_input_ids = encodings["input_ids"].to(self.device)
-            decoder_attention_mask = encodings["attention_mask"]
+            # encodings = self.processor.tokenizer(
+            #     captions,
+            #     padding="longest",
+            #     # truncation=True,
+            #     return_tensors="pt",
+            #     max_length=2000,
+            # )
+            # decoder_input_ids = encodings["input_ids"].to(self.device)
+            # decoder_attention_mask = encodings["attention_mask"]
             
             with torch.inference_mode():
-                # TODO : this may be wrong. Might need only the prefix for input_ids
                 outputs = self.model(
                     pixel_values=batch_images.to(self.device),
-                    input_ids=input_ids.to(self.device),
-                    attention_mask=attention_mask.to(self.device),
-                    decoder_input_ids=decoder_input_ids,
-                    decoder_attention_mask=decoder_attention_mask.to(self.device),
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    # labels=decoder_input_ids,
+                    # decoder_attention_mask=decoder_attention_mask.to(self.device),
                     return_dict=True,
                 )
-                output_logits = outputs.logits
+                output_logits = outputs.decoder_logits
                 probs = torch.log_softmax(output_logits, dim=-1).detach()
                 
-            gen_probs = torch.gather(probs, 2, decoder_input_ids[:, :, None]).squeeze(-1)
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
             
             # remove padding tokens
             # non_pad_locs = (input_ids != self.tokenizer.pad_token_id) & (input_ids != self.tokenizer._convert_token_to_id('.'))
-            non_pad_locs = (decoder_input_ids != self.processor.tokenizer.pad_token_id)
+            non_pad_locs = (input_ids != self.processor.tokenizer.pad_token_id)
             class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
             class_probs.append(class_prob)
         
