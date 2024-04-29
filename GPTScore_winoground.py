@@ -168,6 +168,7 @@ def main():
     
     dataset = Winoground(
         root_dir='/projectnb/ivc-ml/samarth/projects/synthetic/final/misc_repos/t2i_metrics/datasets/', 
+        image_preprocess=eval_model.image_processor,
         return_image_paths=False)
     loader = DataLoader(dataset, args.batch_size,  shuffle=False, drop_last=False)
     

@@ -10,6 +10,7 @@ from PIL import Image
 from tqdm import tqdm
 from torch.utils.data import Dataset
 from scipy.stats import kendalltau
+from torchvision.datasets.folder import default_loader
 
 
 def get_winoground_scores(scores_i2t):
@@ -88,8 +89,8 @@ class Winoground(Dataset):
             image_0 = image_0_path
             image_1 = image_1_path
         else:
-            image_0 = self.preprocess(self.image_loader(image_0_path))
-            image_1 = self.preprocess(self.image_loader(image_1_path))
+            image_0 = self.preprocess(default_loader(image_0_path))
+            image_1 = self.preprocess(default_loader(image_1_path))
         
         caption_0 = self.metadata[idx]['caption_0']
         caption_1 = self.metadata[idx]['caption_1']
