@@ -177,9 +177,11 @@ def main():
     for batch in tqdm(loader):
         # batch['images'] has shape B x 2 x (img_shape)
         # batch['captions'] has shape B x 2
-        batch_imgs1 = batch['images'][:, 0].cuda(non_blocking=True)
-        batch_imgs2 = batch['images'][:, 1].cuda(non_blocking=True)
-        captions = batch['texts'].cuda(non_blocking=True)
+        
+        # fetching images is complex because of stupid datastructures in the model
+        batch_imgs1 = batch['images'][0]['pixel_values'][0].cuda(non_blocking=True)
+        batch_imgs2 = batch['images'][1]['pixel_values'][0].cuda(non_blocking=True)
+        captions = batch['texts']
         
         scores1 = eval_model.get_GPTScore1({'pixel_values' : [batch_imgs1]}, captions, prompt=args.coco_prompts).cpu()
         scores2 = eval_model.get_GPTScore1({'pixel_values' : [batch_imgs2]}, captions, prompt=args.coco_prompts).cpu()

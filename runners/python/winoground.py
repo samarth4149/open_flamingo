@@ -11,6 +11,7 @@ datasets = SourceFileLoader(
 
 if __name__ == '__main__':
     
+    # cmd = ['python -m ipdb', 'GPTScore_winoground.py']
     cmd = ['python', 'GPTScore_winoground.py']
     cmd += ['-device', '0']
     # cmd += ['--coco_dataroot', '/projectnb/ivc-ml/samarth/projects/synthetic/final/clip_benchmark_data/sugar_crepe',
