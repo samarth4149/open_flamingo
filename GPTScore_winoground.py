@@ -166,7 +166,9 @@ def main():
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
     
-    dataset = Winoground(root_dir='/projectnb/ivc-ml/samarth/projects/synthetic/final/misc_repos/t2i_metrics/datasets/')
+    dataset = Winoground(
+        root_dir='/projectnb/ivc-ml/samarth/projects/synthetic/final/misc_repos/t2i_metrics/datasets/', 
+        return_image_paths=False)
     loader = DataLoader(dataset, args.batch_size,  shuffle=False, drop_last=False)
     
     # TODO : arrange images from winoground with captions appropriately to get GPTScore1
@@ -176,7 +178,7 @@ def main():
         # batch['captions'] has shape B x 2
         batch_imgs1 = batch['images'][:, 0].cuda(non_blocking=True)
         batch_imgs2 = batch['images'][:, 1].cuda(non_blocking=True)
-        captions = batch['captions'].cuda(non_blocking=True)
+        captions = batch['texts'].cuda(non_blocking=True)
         
         scores1 = eval_model.get_GPTScore1({'pixel_values' : [batch_imgs1]}, captions, prompt=args.coco_prompts).cpu()
         scores2 = eval_model.get_GPTScore1({'pixel_values' : [batch_imgs2]}, captions, prompt=args.coco_prompts).cpu()
