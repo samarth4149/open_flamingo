@@ -13,8 +13,8 @@ if __name__ == '__main__':
     
     cmd = ['python', 'GPTScore_winoground.py']
     cmd += ['-device', '0']
-    cmd += ['--coco_dataroot', '/projectnb/ivc-ml/samarth/projects/synthetic/final/clip_benchmark_data/sugar_crepe',
-            '--dataset_name', "sugarcrepe/add_obj",]
+    # cmd += ['--coco_dataroot', '/projectnb/ivc-ml/samarth/projects/synthetic/final/clip_benchmark_data/sugar_crepe',
+    #         '--dataset_name', "sugarcrepe/add_obj",]
             # '--dataset_name', ",".join(["sugarcrepe/" + split for split in ALL_SPLITS]),]
     
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
             # '--model_path', 'liuhaotian/llava-v1.5-13b',
             '--model_path', '/projectnb/ivc-ml/sunxm/ckpt/llava-v1.5-13b/',
             '--model_name', 'llava-v1.5-13b',
-            '--output_dir', 'expts/sugarcrepe_llava-v1.5-13b_new_revert_version',
+            '--output_dir', 'expts/winoground_llava-v1.5-13b',
             ]
 
     os.system(' '.join(cmd))
