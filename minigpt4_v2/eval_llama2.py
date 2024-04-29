@@ -341,7 +341,7 @@ class MiniGPT4_llama2():
         # class_names = ['tench', 'sink']
         
         for captions in batch_captions:
-            sentences = [3*[self.create_prompt(system, sep, [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], cap)])] for cap in captions]
+            sentences = [num_imgs_per_cap*[self.create_prompt(system, sep, [(roles[0], "<Img><ImageHere></Img> %s" % (prompt)), (roles[1], cap)])] for cap in captions]
             sentences = [item for sublist in sentences for item in sublist] # just flattening
             
             sentence_segs = [sentence.split('<ImageHere>') for sentence in sentences]

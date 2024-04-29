@@ -446,10 +446,16 @@ def evaluate_captioning(
                 outputs = eval_model.get_GPTScore(batch_images=batch_images, class_names=class_names,  prompt=prompt,
                                                   task=args.task)
         elif args.model == 'blip':
-            if args.dataset_name.startswith('sugarcrepe'):
+            if args.ptrain:
+                assert args.ptrain == 'gaussian', 'only gaussian p_train is supported'
+                outputs = eval_model.get_ptrain(image_shape=batch_images['pixel_values'][0].shape[1:], batch_captions=batch_captions, prompt=prompt)
+            elif args.dataset_name.startswith('sugarcrepe'):
                 outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions, prompt=prompt)
         elif args.model == 'old_blip':
-            if args.dataset_name.startswith('sugarcrepe'):
+            if args.ptrain:
+                assert args.ptrain == 'gaussian', 'only gaussian p_train is supported'
+                outputs = eval_model.get_ptrain(image_shape=batch_images['pixel_values'][0].shape[1:], batch_captions=batch_captions)
+            elif args.dataset_name.startswith('sugarcrepe'):
                 outputs = eval_model.get_GPTScore1(batch_images=batch_images, batch_captions=batch_captions)
         else:
             batch_text = [f"<image>{prompt} "] * len(batch_images['pixel_values'][0])
@@ -477,7 +483,7 @@ def evaluate_captioning(
     #     print('mAP is %0.2f' % mAP)
     #     ret = {'mAP': mAP}
     # else:
-    acc = top_k_accuracy(preds.cpu(), targets, k=1)
+    acc = top_k_accuracy(preds.float().cpu(), targets, k=1)
     print('Top-1 is %0.2f' % (acc*100))
     ret = {'top-1 acc': acc}
 

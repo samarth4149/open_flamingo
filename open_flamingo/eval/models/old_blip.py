@@ -34,7 +34,7 @@ class EvalModel(BaseEvalModel):
         )
         self.model.to(self.device)
         self.model.eval()
-        self.processor.tokenizer.padding_side = "left"
+        # self.processor.tokenizer.padding_side = "left"
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         """Preprocess images and stack them.
@@ -82,6 +82,7 @@ class EvalModel(BaseEvalModel):
         encodings = self.processor.tokenizer(
             batch_text,
             padding="longest",
+            padding_side='right',
             truncation=True,
             return_tensors="pt",
             max_length=2000,
@@ -113,7 +114,65 @@ class EvalModel(BaseEvalModel):
                 padding="longest",
                 truncation=True,
                 return_tensors="pt",
-                max_length=2000,
+                # max_length=2000,
+            )
+            
+            input_ids = encodings["input_ids"].to(self.device)
+            attention_mask = encodings["attention_mask"].to(self.device)
+            
+            # encodings = self.processor.tokenizer(
+            #     captions,
+            #     padding="longest",
+            #     # truncation=True,
+            #     return_tensors="pt",
+            #     max_length=2000,
+            # )
+            # decoder_input_ids = encodings["input_ids"].to(self.device)
+            # decoder_attention_mask = encodings["attention_mask"]
+            
+            # TODO : see if batching is the problem
+            with torch.inference_mode():
+                outputs = self.model(
+                    pixel_values=batch_images.to(self.device),
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    # labels=decoder_input_ids,
+                    # decoder_attention_mask=decoder_attention_mask.to(self.device),
+                    return_dict=True,
+                )
+                output_logits = outputs.decoder_logits
+                probs = torch.log_softmax(output_logits, dim=-1).detach()
+                
+            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+            
+            # remove padding tokens
+            # non_pad_locs = (input_ids != self.tokenizer.pad_token_id) & (input_ids != self.tokenizer._convert_token_to_id('.'))
+            non_pad_locs = (input_ids != self.processor.tokenizer.pad_token_id)
+            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            class_probs.append(class_prob)
+        
+        class_probs = torch.stack(class_probs, dim=-1)
+        return class_probs
+
+    def get_ptrain(self, image_shape, batch_captions):
+        batch_size = len(batch_captions[0])
+        mean_gaussian = 0.45
+        std_gaussian = 0.25
+        num_imgs_per_cap = 3
+        
+        batch_images = torch.normal(mean=mean_gaussian, std=std_gaussian, size=(batch_size*num_imgs_per_cap,) + image_shape).to(self.device)
+        
+        class_probs = []
+        for captions in batch_captions:
+            captions_expanded = [num_imgs_per_cap*[cap] for cap in captions]
+            captions_expanded = [item for sublist in captions_expanded for item in sublist]
+            
+            encodings = self.processor.tokenizer(
+                captions_expanded,
+                padding="longest",
+                truncation=True,
+                return_tensors="pt",
+                # max_length=2000,
             )
             
             input_ids = encodings["input_ids"].to(self.device)
@@ -150,7 +209,10 @@ class EvalModel(BaseEvalModel):
             class_probs.append(class_prob)
         
         class_probs = torch.stack(class_probs, dim=-1)
+        class_probs = class_probs.view(-1, num_imgs_per_cap, class_probs.shape[1]).mean(dim=1)
+        
         return class_probs
+        
 
     def get_vqa_prompt(self, question, answer=None) -> str:
         return (

@@ -1,4 +1,4 @@
-name: openflamingo
+name: openflamingo2
 channels:
   - defaults
 dependencies:

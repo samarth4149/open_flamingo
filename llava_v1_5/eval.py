@@ -11,7 +11,9 @@ import warnings
 import shutil
 from llava_v1_5.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_IMAGE_TOKEN, IMAGE_TOKEN_INDEX
 from tqdm import tqdm
+import copy
 
+IGNORE_INDEX = -100
 
 def _detach_pkvs(pkvs):
     """Detach a set of past key values."""
@@ -23,6 +25,7 @@ class LLaVA_v1_5():
         disable_torch_init()
 
         self.tokenizer, self.model, self.image_processor, context_len = self.load_pretrained_model(model_path, model_base, model_name)
+        self.device = self.model.device
 
 
     def load_pretrained_model(self, model_path, model_base, model_name, device_map="auto",
@@ -103,6 +106,7 @@ class LLaVA_v1_5():
                 else:
                     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                     model = LlavaLlamaForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
+                    model.tie_weights()
         else:
             # Load language model
             if model_base is not None:
@@ -118,7 +122,6 @@ class LLaVA_v1_5():
                 print('Convert to FP16...')
                 model.to(torch.float16)
             else:
-                use_fast = False
                 if 'mpt' in model_name.lower():
                     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
                     model = AutoModelForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True,
@@ -173,6 +176,21 @@ class LLaVA_v1_5():
         keywords = [stop_str]
         stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
         return input_ids, stop_str, stopping_criteria
+    
+    def get_prompt(self, query, response=None):
+        qs = query
+        if self.model.config.mm_use_im_start_end:
+            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
+        else:
+            qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
+
+        # get system message
+        conv = conv_templates["vicuna_v1"].copy()
+        conv.append_message(conv.roles[0], qs)
+        conv.append_message(conv.roles[1], response)
+        prompt = conv.get_prompt()
+
+        return prompt
 
     def get_outputs(self, batch_images, prompt):
         input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
@@ -204,8 +222,6 @@ class LLaVA_v1_5():
         batch_images = batch_images['pixel_values'][0]
         class_probs = []
         prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
-        # import pdb
-        # pdb.set_trace()
         prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
         with torch.inference_mode():
             precomputed_output = self.model(
@@ -242,43 +258,127 @@ class LLaVA_v1_5():
 
         return class_probs
     
+    @torch.no_grad()
+    @torch.autocast(device_type='cuda', dtype=torch.float16)
     def get_GPTScore1(self, batch_images, batch_captions, 
                      prompt='Describe the image in detail.',):
         batch_images = batch_images['pixel_values'][0]
         class_probs = []
-        prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
-        # import pdb
-        # pdb.set_trace()
-        prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
-        with torch.inference_mode():
-            precomputed_output = self.model(
-                prefix_input_ids,
-                images=batch_images.half().cuda(),
-                use_cache=True
-            )
-            precomputed_pkvs = _detach_pkvs(precomputed_output.past_key_values)
+        
+        # prefix_input_ids, stop_str, stopping_criteria = self.encode_prompt(prompt)
+        # prefix_input_ids = prefix_input_ids.tile((batch_images.shape[0], 1))
+        # with torch.inference_mode():
+        #     precomputed_output = self.model(
+        #         prefix_input_ids,
+        #         images=batch_images.to(dtype=torch.float16).cuda(),
+        #         use_cache=True
+        #     )
+        #     precomputed_pkvs = _detach_pkvs(precomputed_output.past_key_values)
             
+        
+        
         for captions in batch_captions:
-            inputs = self.tokenizer(captions, return_tensors="pt", padding='longest')
-            input_ids = inputs.input_ids.cuda()
-            with torch.inference_mode():
-                outputs = self.model(
-                    input_ids,
-                    past_key_values= precomputed_pkvs,
-                )
-                # outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
-                output_logits = outputs.logits
-                probs = torch.log_softmax(output_logits, dim=-1).detach()
-
-            # probs = probs[:, :-1, :] # removes end of sentence token?
-            # probs = probs[:, -class_name_token_len:, :]
-            assert probs.shape[1] == input_ids.shape[1]
-            gen_probs = torch.gather(probs, 2, input_ids[:, :, None]).squeeze(-1)
+            # input_ids = [self.encode_prompt(prompt)[0].squeeze() for c in captions]
+            input_ids = [tokenizer_image_token(self.get_prompt(prompt, c), self.tokenizer, return_tensors='pt') for c in captions]
+            labels = copy.deepcopy(input_ids)
             
-            # remove padding tokens
-            # non_pad_locs = (input_ids != self.tokenizer.pad_token_id) & (input_ids != self.tokenizer._convert_token_to_id('.'))
-            non_pad_locs = (input_ids != self.tokenizer.pad_token_id)
-            class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
+            tokenized_len = len(tokenizer_image_token(self.get_prompt(prompt), self.tokenizer))
+            if prompt[-1] == " ":
+                tokenized_len -= 1 # because white space
+            for label in labels:
+                label[:tokenized_len] = IGNORE_INDEX
+                label[-1] = IGNORE_INDEX # also ignore eos token
+            # labels[:, :tokenized_len] = IGNORE_INDEX
+
+            input_ids = torch.nn.utils.rnn.pad_sequence(
+                input_ids,
+                batch_first=True,
+                padding_value=self.tokenizer.pad_token_id)
+            labels = torch.nn.utils.rnn.pad_sequence(labels,
+                                                     batch_first=True,
+                                                     padding_value=IGNORE_INDEX)
+            
+            input_ids = input_ids[:, :self.tokenizer.model_max_length]
+            labels = labels[:, :self.tokenizer.model_max_length]   
+            attention_mask = input_ids.ne(self.tokenizer.pad_token_id)
+            input_ids, attention_mask, labels = input_ids.to(self.device), attention_mask.to(self.device), labels.to(self.device)
+            batch_images = batch_images.to(device=self.device, dtype=torch.float16)
+            input_ids, attention_mask, past_key_values, inputs_embeds, labels = self.model.prepare_inputs_labels_for_multimodal(
+                input_ids,
+                attention_mask,
+                None,
+                labels,
+                batch_images
+            )
+            
+            assert input_ids is None, "input_ids should be None for LLaVA-1.5"
+            assert past_key_values is None, "past_key_values should be None for LLaVA-1.5"
+            model_input_kwargs = {
+                'input_ids': input_ids, # None for LLaVA-1.5
+                'attention_mask': attention_mask,
+                # 'images': batch_images,
+                # 'labels': labels,
+                'past_key_values': past_key_values,
+                'inputs_embeds': inputs_embeds,
+                'use_cache': None,
+                'output_attentions': None,
+                'output_hidden_states': None,
+                # 'return_dict': True,
+                'return_dict': False,
+            }
+            
+            outputs = self.model.model(
+                **model_input_kwargs
+            )
+
+            # output_logits = outputs.logits
+            # probs = torch.log_softmax(output_logits, dim=-1)
+            # labels[labels < 0] = 0
+
+            hidden_states = outputs[0]
+            output_logits = self.model.lm_head(hidden_states)
+
+            # # Shift so that tokens < n predict n
+            # shift_logits = logits[..., :-1, :].contiguous()
+            # shift_labels = labels[..., 1:].contiguous()
+            # # Flatten the tokens
+            # loss_fct = torch.nn.CrossEntropyLoss(reduction='mean')
+            # shift_labels = shift_labels.to(shift_logits.device)
+            # class_prob = torch.zeros(shift_logits.shape[0])
+            # for k in range(class_prob.shape[0]):
+            #     class_prob[k] = (-loss_fct(shift_logits[k], shift_labels[k]))
+            # class_probs.append(class_prob)
+            
+            # inputs = self.tokenizer(captions, return_tensors="pt", padding='longest')
+            # input_ids = inputs.input_ids[:, 1:].cuda() # remove bos token
+            # with torch.inference_mode():
+            #     outputs = self.model(
+            #         input_ids,
+            #         past_key_values= precomputed_pkvs,
+            #     )
+            #     # outputs_logits = torch.cat([prefix_output_logits, outputs.logits], dim=1)
+            #     output_logits = outputs.logits
+            #     probs = torch.log_softmax(output_logits, dim=-1).detach()
+
+            # probs = probs[:, -labels.shape[1]:, :]
+            output_logits = output_logits[:, -labels.shape[1]:, :]
+            shifted_logits = output_logits[:, :-1, :] # removes last token
+            shifted_labels = labels[:, 1:]
+            
+            loss_fct = torch.nn.CrossEntropyLoss(reduction='mean')
+            class_prob = torch.zeros(shifted_logits.shape[0])
+            for k in range(class_prob.shape[0]):
+                class_prob[k] = (-loss_fct(shifted_logits[k], shifted_labels[k]))
+            
+            # labels = input_ids[:, 1:]
+            # # probs = probs[:, -class_name_token_len:, :]
+            # assert probs.shape[1] == labels.shape[1]
+            # gen_probs = torch.gather(shifted_probs, 2, shifted_labels[:, :, None]).squeeze(-1)
+            
+            # # remove padding tokens
+            # # non_pad_locs = (input_ids != self.tokenizer.pad_token_id) & (input_ids != self.tokenizer._convert_token_to_id('.'))
+            # non_pad_locs = (shifted_labels != self.tokenizer.pad_token_id)
+            # class_prob = (gen_probs * non_pad_locs).sum(dim=-1).div(non_pad_locs.sum(dim=-1))
             class_probs.append(class_prob)
             
         class_probs = torch.stack(class_probs, dim=-1)
