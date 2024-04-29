@@ -192,7 +192,7 @@ def main():
     all_scores = torch.cat(all_scores, dim=0)
     ret = dataset.evaluate_scores(all_scores)
     
-    os.path.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
     save_expt_info(args, outdir=args.output_dir)
     torch.save(all_scores, os.path.join(args.output_dir, f'scores.pt'))
     with open(os.path.join(args.output_dir, 'results.json'), 'w') as f:
